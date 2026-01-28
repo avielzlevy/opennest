@@ -9,6 +9,8 @@ import {
 } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
 import { TypeMapper } from "../utils/type-mapper";
+import { isReferenceObject, isSchemaObject } from '../src/utils/type-guards';
+import { toEnumKey, normalizeSchemaName } from '../src/utils/formatting-helpers';
 
 export class DtoGenerator implements IGenerator {
   constructor(private readonly typeMapper: TypeMapper) {}
@@ -22,10 +24,12 @@ export class DtoGenerator implements IGenerator {
     >;
 
     for (const [name, schema] of Object.entries(schemas)) {
-      if ("$ref" in schema) continue;
+      // Skip references - only process actual schema objects
+      if (isReferenceObject(schema)) continue;
+      if (!isSchemaObject(schema)) continue;
 
-      // FIX: Rename 'Object' to 'ObjectDto' to avoid collision
-      const className = name === "Object" ? "ObjectDto" : name;
+      // Normalize class name to avoid reserved word collisions
+      const className = normalizeSchemaName(name);
 
       const sourceFile = project.createSourceFile(
         `src/dtos/${className}.dto.ts`,
@@ -87,7 +91,7 @@ export class DtoGenerator implements IGenerator {
               name: def.constName,
               initializer: `{
                             ${def.values
-                              .map((v) => `${this.toEnumKey(v)}: '${v}'`)
+                              .map((v) => `${toEnumKey(v)}: '${v}'`)
                               .join(",\n")}
                         } as const`,
             },
@@ -126,12 +130,13 @@ export class DtoGenerator implements IGenerator {
 
       mapping.imports.forEach((imp) => {
         const file = classDecl.getSourceFile();
-        if (
-          !file.getImportDeclaration(
-            (d: ImportDeclaration) =>
-              d.getModuleSpecifierValue() === imp.moduleSpecifier,
-          )
-        ) {
+        // Check if import already exists with proper typing
+        const existingImport = file.getImportDeclaration(
+          (d: ImportDeclaration) =>
+            d.getModuleSpecifierValue() === imp.moduleSpecifier
+        );
+
+        if (!existingImport) {
           file.addImportDeclaration({
             namedImports: [imp.named],
             moduleSpecifier: imp.moduleSpecifier,
@@ -139,13 +144,5 @@ export class DtoGenerator implements IGenerator {
         }
       });
     }
-  }
-
-  private toEnumKey(value: string): string {
-    const upper = value.toUpperCase().replace(/[\s-]/g, "_");
-    if (!/^[A-Z_][A-Z0-9_]*$/.test(upper)) {
-      return `'${upper}'`;
-    }
-    return upper;
   }
 }
