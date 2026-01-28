@@ -1,6 +1,8 @@
 // utils/type-mapper.ts
 import { OpenAPIV3 } from "openapi-types";
 import { TypeMappingResult } from "../interfaces/core";
+import { isReferenceObject, isArraySchema, isSchemaObject } from '../src/utils/type-guards';
+import { capitalize, toConstantCase, extractRefName, normalizeSchemaName } from '../src/utils/formatting-helpers';
 
 export class TypeMapper {
   public mapSchemaToType(
@@ -16,14 +18,18 @@ export class TypeMapper {
     };
 
     // 1. Handle References ($ref)
-    if ("$ref" in schema) {
-      let refName = schema.$ref.split("/").pop() || "Unknown";
-      if (refName === "Object") refName = "ObjectDto";
+    if (isReferenceObject(schema)) {
+      const refName = extractRefName(schema.$ref);
+      if (!refName) {
+        result.tsType = "Unknown";
+        return result;
+      }
 
-      result.tsType = refName;
+      const normalizedName = normalizeSchemaName(refName);
+      result.tsType = normalizedName;
       result.imports.push({
-        named: refName,
-        moduleSpecifier: `../dtos/${refName}.dto`,
+        named: normalizedName,
+        moduleSpecifier: `../dtos/${normalizedName}.dto`,
       });
 
       result.decorators.push({
@@ -33,7 +39,7 @@ export class TypeMapper {
       });
       result.decorators.push({
         name: "Type",
-        arguments: [`() => ${refName}`],
+        arguments: [`() => ${normalizedName}`],
         moduleSpecifier: "class-transformer",
       });
 
@@ -41,7 +47,7 @@ export class TypeMapper {
     }
 
     // 2. Handle Arrays
-    if (schema.type === "array") {
+    if (isArraySchema(schema)) {
       result.isArray = true;
       result.decorators.push({
         name: "IsArray",
@@ -74,14 +80,14 @@ export class TypeMapper {
     }
 
     // 3. Handle Enums (Strings)
-    if (schema.enum && context) {
+    if (isSchemaObject(schema) && schema.enum && context) {
       const { className, propName } = context;
       // Heuristic: ClientResponseDto + status -> ClientResponseDtoStatus
       // Or if you want a cleaner name you might strip 'Dto' or 'Response'.
       // For safety/uniqueness, we use the full class name prefix.
-      const baseName = `${className}${this.capitalize(propName)}`;
+      const baseName = `${className}${capitalize(propName)}`;
       const enumName = baseName;
-      const constName = this.toConstantCase(baseName); // CLIENT_RESPONSE_DTO_STATUS
+      const constName = toConstantCase(baseName); // CLIENT_RESPONSE_DTO_STATUS
 
       result.tsType = enumName;
       result.enumDefinition = {
@@ -99,7 +105,14 @@ export class TypeMapper {
 
       // Add ApiProperty explicitly here to ensure it uses the enum
       // We skip the generic ApiProperty addition later to avoid duplication/conflict
-      const apiPropObj: any = {};
+      interface ApiPropertyOptions {
+        description?: string;
+        example?: unknown;
+        required?: boolean;
+        enum?: unknown[];
+        enumName?: string;
+      }
+      const apiPropObj: ApiPropertyOptions = {};
       if (schema.description) apiPropObj.description = schema.description;
       if (schema.example) apiPropObj.example = schema.example;
       if (!isRequired) apiPropObj.required = false;
@@ -114,7 +127,7 @@ export class TypeMapper {
       });
 
       return this.applyOptionality(result, isRequired);
-    } else if (schema.enum) {
+    } else if (isSchemaObject(schema) && schema.enum) {
       // Fallback for no context (e.g. array items where we didn't pass context down yet)
       const unionType = schema.enum.map((e) => `'${e}'`).join(" | ");
       result.tsType = unionType;
@@ -126,6 +139,11 @@ export class TypeMapper {
     }
 
     // 4. Handle Primitives & Objects
+    if (!isSchemaObject(schema)) {
+      // If we reach here with a reference, something went wrong
+      return result;
+    }
+
     switch (schema.type) {
       case "string":
         // Only apply IsString if it wasn't an enum (enums are usually strings but handled above)
@@ -172,7 +190,12 @@ export class TypeMapper {
     // 5. ApiProperty Decorator (Generic)
     // Only add if we haven't already added it (e.g. in the enum block)
     if (!result.decorators.some((d) => d.name === "ApiProperty")) {
-      const apiPropObj: any = {};
+      interface ApiPropertyOptions {
+        description?: string;
+        example?: unknown;
+        required?: boolean;
+      }
+      const apiPropObj: ApiPropertyOptions = {};
       if (schema.description) apiPropObj.description = schema.description;
       if (schema.example) apiPropObj.example = schema.example;
       if (!isRequired) apiPropObj.required = false;
@@ -209,18 +232,5 @@ export class TypeMapper {
       });
     }
     return result;
-  }
-
-  private toConstantCase(str: string): string {
-    // Converts "ClientResponseDto" -> "CLIENT_RESPONSE_DTO"
-    // Converts "status" -> "STATUS"
-    return str
-      .replace(/([a-z])([A-Z])/g, "$1_$2")
-      .replace(/[\s-]+/g, "_")
-      .toUpperCase();
-  }
-
-  private capitalize(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }
