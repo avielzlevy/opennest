@@ -1,14 +1,18 @@
 import { OpenAPIV3 } from "openapi-types";
-import { Project } from "ts-morph";
+import { Project, SourceFile } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
 
-const HTTP_METHODS = ["get", "post", "put", "delete", "patch"] as const;
+// Helper imports
+import { groupOperationsByTag, HTTP_METHODS } from '../src/utils/operation-helpers';
+import { extractBodyDtoName, extractResponseDtoName } from '../src/utils/schema-helpers';
+import { capitalize, buildDtoImportPath } from '../src/utils/formatting-helpers';
+import { isParameterObject, isSchemaObject } from '../src/utils/type-guards';
 
 export class DecoratorGenerator implements IGenerator {
   public generate(document: OpenAPIV3.Document, project: Project): void {
     if (!document.paths) return;
 
-    const grouped = this.groupOperationsByTag(document.paths);
+    const grouped = groupOperationsByTag(document.paths);
 
     for (const [tagName, operations] of Object.entries(grouped)) {
       const resourceName = tagName.replace(/\s+/g, "");
@@ -44,8 +48,11 @@ export class DecoratorGenerator implements IGenerator {
 
         // Name: "PreviewCouponEndpoint"
         let baseName = operation.operationId || `${op.method}${resourceName}`;
-        if (baseName.includes("_")) baseName = baseName.split("_")[1];
-        const functionName = `${this.capitalize(baseName)}Endpoint`;
+        if (baseName.includes("_")) {
+          const parts = baseName.split("_");
+          baseName = parts[parts.length - 1] || baseName;
+        }
+        const functionName = `${capitalize(baseName)}Endpoint`;
 
         // -- Build the applyDecorators arguments --
         const decoratorArgs: string[] = [];
@@ -77,7 +84,7 @@ export class DecoratorGenerator implements IGenerator {
 
         // 3. Responses
         // Note: In a real world, iterate all codes. Here we focus on success.
-        const responseDto = this.extractResponseDto(operation.responses);
+        const responseDto = extractResponseDtoName(operation.responses);
         if (responseDto !== "any" && responseDto !== "void") {
           const cleanDto = responseDto.replace("[]", "");
           this.addDtoImport(sourceFile, cleanDto);
@@ -94,8 +101,8 @@ export class DecoratorGenerator implements IGenerator {
         }
 
         // 4. ApiBody
-        const bodyDto = this.extractBodyDto(
-          operation.requestBody as OpenAPIV3.RequestBodyObject,
+        const bodyDto = extractBodyDtoName(
+          operation.requestBody as OpenAPIV3.RequestBodyObject | undefined,
         );
         if (bodyDto) {
           this.addDtoImport(sourceFile, bodyDto);
@@ -105,22 +112,28 @@ export class DecoratorGenerator implements IGenerator {
 
         // 5. ApiQuery / ApiParam
         if (operation.parameters) {
-          for (const param of operation.parameters as OpenAPIV3.ParameterObject[]) {
+          for (const param of operation.parameters) {
+            if (!isParameterObject(param)) continue;
+
+            // Determine parameter type
+            let paramType = 'String';
+            if (param.schema && isSchemaObject(param.schema)) {
+              paramType = param.schema.type === 'integer' || param.schema.type === 'number'
+                ? 'Number'
+                : 'String';
+            }
+
             if (param.in === "query") {
               swaggerImports.add("ApiQuery");
               const required = param.required || false;
-              const type =
-                (param.schema as any).type === "integer" ? "Number" : "String";
               decoratorArgs.push(
-                `ApiQuery({ name: '${param.name}', required: ${required}, type: ${type} })`,
+                `ApiQuery({ name: '${param.name}', required: ${required}, type: ${paramType} })`,
               );
             }
             if (param.in === "path") {
               swaggerImports.add("ApiParam");
-              const type =
-                (param.schema as any).type === "integer" ? "Number" : "String";
               decoratorArgs.push(
-                `ApiParam({ name: '${param.name}', type: ${type} })`,
+                `ApiParam({ name: '${param.name}', type: ${paramType} })`,
               );
             }
           }
@@ -144,63 +157,27 @@ export class DecoratorGenerator implements IGenerator {
     }
   }
 
-  // --- Reuse Helpers ---
-
-  private groupOperationsByTag(paths: OpenAPIV3.PathsObject) {
-    const groups: Record<string, any[]> = {};
-    for (const [pathUrl, pathItem] of Object.entries(paths)) {
-      if (!pathItem) continue;
-      HTTP_METHODS.forEach((method) => {
-        const op = pathItem[method];
-        if (op) {
-          const tag = op.tags?.[0] || "Default";
-          if (!groups[tag]) groups[tag] = [];
-          groups[tag].push({ method, path: pathUrl, operation: op });
-        }
-      });
-    }
-    return groups;
-  }
-
-  private extractBodyDto(
-    body: OpenAPIV3.RequestBodyObject | undefined,
-  ): string | null {
-    if (!body?.content?.["application/json"]?.schema) return null;
-    const schema = body.content["application/json"]
-      .schema as OpenAPIV3.ReferenceObject;
-    const ref = schema.$ref ? schema.$ref.split("/").pop()! : null;
-    return ref === "Object" ? "ObjectDto" : ref;
-  }
-
-  private extractResponseDto(responses: OpenAPIV3.ResponsesObject): string {
-    const success = responses["200"] || responses["201"];
-    if (!success) return "void";
-    if ("content" in success && success.content?.["application/json"]?.schema) {
-      const schema = success.content["application/json"].schema as any;
-      let refName = "any";
-      if (schema.$ref) refName = schema.$ref.split("/").pop()!;
-      else if (schema.type === "array" && schema.items.$ref)
-        refName = `${schema.items.$ref.split("/").pop()}[]`;
-      return refName.replace("Object", "ObjectDto");
-    }
-    return "any";
-  }
-
-  private addDtoImport(sourceFile: any, dtoName: string) {
+  /**
+   * Adds a DTO import to the source file if not already present.
+   *
+   * @param sourceFile - The ts-morph source file
+   * @param dtoName - The DTO class name to import
+   */
+  private addDtoImport(sourceFile: SourceFile, dtoName: string): void {
     if (dtoName === "any" || dtoName === "void") return;
-    if (
-      !sourceFile.getImportDeclaration((d: any) =>
-        d.getModuleSpecifierValue().includes(dtoName),
-      )
-    ) {
+
+    const importPath = buildDtoImportPath(dtoName);
+
+    // Check if import already exists
+    const existingImport = sourceFile.getImportDeclaration(
+      d => d.getModuleSpecifierValue() === importPath
+    );
+
+    if (!existingImport) {
       sourceFile.addImportDeclaration({
         namedImports: [dtoName],
-        moduleSpecifier: `../dtos/${dtoName}.dto`,
+        moduleSpecifier: importPath,
       });
     }
-  }
-
-  private capitalize(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }
