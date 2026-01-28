@@ -7,6 +7,12 @@ import {
   generateFallbackOperationName,
   type FallbackGenerationResult,
 } from '../utils/path-fallback';
+import {
+  traverseSpecOperations,
+  groupOperationsByTag,
+  mapToObject,
+  type HttpMethod,
+} from './spec-traverser';
 
 /**
  * Result of parsing an operation's name (operationId or fallback)
@@ -130,4 +136,107 @@ export interface ParseSpecOperationsResult {
 
   /** General warnings about the parsing process */
   warnings: string[];
+}
+
+/**
+ * Parses all operations from an OpenAPI spec.
+ * Applies naming convention detection and fallback generation to each operation.
+ * Groups results by tag/resource.
+ *
+ * @param spec - The OpenAPI specification from Phase 1 loader
+ * @param verbose - Enable detailed logging/warnings
+ * @returns ParseSpecOperationsResult with all operations, skipped, and warnings
+ */
+export function parseSpecOperations(
+  spec: Record<string, unknown>,
+  verbose: boolean = false
+): ParseSpecOperationsResult {
+  const operations: OperationNameParseResult[] = [];
+  const skipped: SkippedOperation[] = [];
+  const warnings: string[] = [];
+
+  try {
+    // Extract all operations from spec
+    const extractedOps = traverseSpecOperations(spec);
+
+    if (extractedOps.length === 0) {
+      warnings.push('No operations found in spec');
+    }
+
+    // Parse each operation
+    for (const op of extractedOps) {
+      try {
+        const parseResult = parseOperationName(op);
+        operations.push(parseResult);
+
+        if (verbose && parseResult.warnings.length > 0) {
+          warnings.push(`Operation ${op.path} ${op.method}: ${parseResult.warnings.join(', ')}`);
+        }
+      } catch (error) {
+        skipped.push({
+          path: op.path,
+          method: op.method,
+          operationId: op.operationId,
+          reason: 'Error parsing operation name',
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  } catch (error) {
+    warnings.push(`Error traversing spec: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
+  return {
+    operations,
+    skipped,
+    warnings,
+  };
+}
+
+/**
+ * Groups parsed operations by tag for downstream generators.
+ *
+ * @param parseResult - Result from parseSpecOperations()
+ * @returns Grouped operations indexed by tag
+ */
+export function groupParsedOperations(
+  parseResult: ParseSpecOperationsResult
+): Record<string, OperationNameParseResult[]> {
+  const grouped: Record<string, OperationNameParseResult[]> = {};
+
+  for (const op of parseResult.operations) {
+    const tag = op.tag || 'Untagged';
+
+    if (!grouped[tag]) {
+      grouped[tag] = [];
+    }
+
+    grouped[tag].push(op);
+  }
+
+  return grouped;
+}
+
+/**
+ * Full parsing pipeline: extract, detect conventions, group by tag.
+ *
+ * @param spec - The OpenAPI specification
+ * @param verbose - Enable detailed warnings
+ * @returns Complete parsing result with grouped operations
+ */
+export interface FullParsingResult extends ParseSpecOperationsResult {
+  /** Operations grouped by tag */
+  grouped: Record<string, OperationNameParseResult[]>;
+}
+
+export function parseOperationsFromSpec(
+  spec: Record<string, unknown>,
+  verbose: boolean = false
+): FullParsingResult {
+  const parseResult = parseSpecOperations(spec, verbose);
+
+  return {
+    ...parseResult,
+    grouped: groupParsedOperations(parseResult),
+  };
 }
