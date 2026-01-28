@@ -35,7 +35,7 @@ export class ArgumentParser {
     this.setupCommand();
 
     try {
-      this.program.parse(['node', 'cli.ts', ...argv], { from: 'user' });
+      this.program.parse(argv, { from: 'user' });
     } catch (error) {
       if (error instanceof Error) {
         throw new InvalidArgumentsError(error.message);
