@@ -89,11 +89,36 @@ function detectPascalCase(input: string): boolean {
 }
 
 /**
- * Main convention detection and normalization function.
- * Applies priority: Tag_method > snake_case > camelCase/PascalCase > unknown
+ * Detects naming convention and normalizes operationId to camelCase.
  *
- * @param input - Raw operationId string
- * @returns ConventionResult with detected convention and normalized name
+ * This function analyzes an operationId string and determines which naming convention
+ * it follows, then normalizes it to a consistent camelCase format suitable for
+ * TypeScript method names. The function never throws - it always returns a valid result.
+ *
+ * Naming Convention Priority:
+ * 1. Tag_method: Exactly one underscore (e.g., User_GetById → userGetById)
+ * 2. snake_case: 2+ underscores (e.g., get_users_by_id → getUsersById)
+ * 3. camelCase: Lowercase start (e.g., getUser → getUser)
+ * 4. PascalCase: Uppercase start → converted to camelCase (e.g., GetUser → getUser)
+ * 5. Unknown: Treated as single name with sanitization (e.g., invalid!chars → invalidchars)
+ *
+ * @param input - Raw operationId string from OpenAPI specification
+ * @returns ConventionResult with detected convention, normalized name, and metadata
+ *
+ * @example
+ * // Tag_method format (Azure style)
+ * const result = detectConvention('User_GetById');
+ * // → { convention: 'tag_method', operationName: 'userGetById', tag: 'User', method: 'GetById' }
+ *
+ * @example
+ * // snake_case format (Python style)
+ * detectConvention('get_users_by_id');
+ * // → { convention: 'snake_case', operationName: 'getUsersById' }
+ *
+ * @example
+ * // Graceful handling of invalid input
+ * detectConvention(null);
+ * // → { convention: 'unknown', operationName: '_', wasSanitized: true, warnings: [...] }
  */
 export function detectConvention(input: string): ConventionResult {
   const warnings: string[] = [];
@@ -182,10 +207,20 @@ export function detectConvention(input: string): ConventionResult {
 }
 
 /**
- * Convenience function: detect convention and return just the normalized name
+ * Convenience function to quickly normalize an operationId to camelCase.
  *
- * @param operationId - Raw operationId string
- * @returns Normalized camelCase operation name
+ * This is a simplified version of detectConvention that returns only the
+ * normalized operation name without additional metadata. Use this when you
+ * only need the final camelCase result and don't care about the convention
+ * type, warnings, or tag/method extraction.
+ *
+ * @param operationId - Raw operationId string from OpenAPI specification
+ * @returns Normalized camelCase operation name suitable for TypeScript methods
+ *
+ * @example
+ * normalizeOperationName('User_GetById');    // → 'userGetById'
+ * normalizeOperationName('get_users_by_id'); // → 'getUsersById'
+ * normalizeOperationName('GetUser');         // → 'getUser'
  */
 export function normalizeOperationName(operationId: string): string {
   return detectConvention(operationId).operationName;
