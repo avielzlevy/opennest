@@ -11,25 +11,29 @@ import {
   buildControllerClassName,
   buildServiceInterfaceName,
   HttpMethod,
-} from "../src/utils/operation-helpers";
+} from "../utils/operation-helpers";
 import {
   buildHttpRoute,
   sanitizeParamName,
   mapParameterLocation,
   inferParameterType,
   buildControllerBasePath,
-} from "../src/utils/route-helpers";
+} from "../utils/route-helpers";
 import {
   extractBodyDtoName,
   extractResponseDtoName,
-} from "../src/utils/schema-helpers";
-import { capitalize, buildDtoImportPath } from "../src/utils/formatting-helpers";
-import { isParameterObject } from "../src/utils/type-guards";
+} from "../utils/schema-helpers";
+import { capitalize, buildDtoImportPath } from "../utils/formatting-helpers";
+import { isParameterObject } from "../utils/type-guards";
 
 export class ControllerGenerator implements IGenerator {
   constructor() {}
 
-  public generate(document: OpenAPIV3.Document, project: Project): void {
+  public generate(
+    document: OpenAPIV3.Document,
+    project: Project,
+    outputPath: string = "./generated",
+  ): void {
     if (!document.paths) return;
 
     const grouped = groupOperationsByTag(document.paths);
@@ -40,7 +44,7 @@ export class ControllerGenerator implements IGenerator {
       const serviceInterfaceName = buildServiceInterfaceName(resourceName);
 
       const sourceFile = project.createSourceFile(
-        `src/controllers/${resourceName.toLowerCase()}.controller.ts`,
+        `${outputPath}/controllers/${resourceName.toLowerCase()}.controller.ts`,
         "",
         { overwrite: true },
       );

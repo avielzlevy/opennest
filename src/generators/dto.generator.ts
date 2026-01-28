@@ -8,14 +8,18 @@ import {
   VariableDeclarationKind,
 } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
-import { TypeMapper } from "../utils/type-mapper";
-import { isReferenceObject, isSchemaObject } from '../src/utils/type-guards';
-import { toEnumKey, normalizeSchemaName } from '../src/utils/formatting-helpers';
+import { TypeMapper } from "../../utils/type-mapper";
+import { isReferenceObject, isSchemaObject } from "../utils/type-guards";
+import { toEnumKey, normalizeSchemaName } from "../utils/formatting-helpers";
 
 export class DtoGenerator implements IGenerator {
   constructor(private readonly typeMapper: TypeMapper) {}
 
-  public generate(document: OpenAPIV3.Document, project: Project): void {
+  public generate(
+    document: OpenAPIV3.Document,
+    project: Project,
+    outputPath: string = "./generated",
+  ): void {
     if (!document.components?.schemas) return;
 
     const schemas = document.components.schemas as Record<
@@ -32,7 +36,7 @@ export class DtoGenerator implements IGenerator {
       const className = normalizeSchemaName(name);
 
       const sourceFile = project.createSourceFile(
-        `src/dtos/${className}.dto.ts`,
+        `${outputPath}/dtos/${className}.dto.ts`,
         "",
         { overwrite: true },
       );
@@ -133,7 +137,7 @@ export class DtoGenerator implements IGenerator {
         // Check if import already exists with proper typing
         const existingImport = file.getImportDeclaration(
           (d: ImportDeclaration) =>
-            d.getModuleSpecifierValue() === imp.moduleSpecifier
+            d.getModuleSpecifierValue() === imp.moduleSpecifier,
         );
 
         if (!existingImport) {

@@ -3,10 +3,10 @@ import { Project, VariableDeclarationKind } from 'ts-morph';
 import { IGenerator } from '../interfaces/core';
 
 export class CommonGenerator implements IGenerator {
-  public generate(_document: OpenAPIV3.Document | undefined, project: Project): void {
-    
+  public generate(_document: OpenAPIV3.Document | undefined, project: Project, outputPath: string = './generated'): void {
+
     // 1. Generate Common Error DTO
-    const errorDtoFile = project.createSourceFile('src/common/dto/error.dto.ts', '', { overwrite: true });
+    const errorDtoFile = project.createSourceFile(`${outputPath}/common/dto/error.dto.ts`, '', { overwrite: true });
     
     errorDtoFile.addImportDeclaration({
         namedImports: ['ApiProperty'],
@@ -59,7 +59,7 @@ export class CommonGenerator implements IGenerator {
     });
 
     // 2. JWT Decorator
-    const jwtFile = project.createSourceFile('src/common/decorators/auth/jwt.decorator.ts', '', { overwrite: true });
+    const jwtFile = project.createSourceFile(`${outputPath}/common/decorators/auth/jwt.decorator.ts`, '', { overwrite: true });
     jwtFile.addImportDeclaration({ namedImports: ['applyDecorators'], moduleSpecifier: '@nestjs/common' });
     jwtFile.addImportDeclaration({ namedImports: ['ApiBearerAuth', 'ApiUnauthorizedResponse'], moduleSpecifier: '@nestjs/swagger' });
     
@@ -88,7 +88,7 @@ export class CommonGenerator implements IGenerator {
     });
 
     // 3. API Key Decorator
-    const apiKeyFile = project.createSourceFile('src/common/decorators/auth/apiKey.decorator.ts', '', { overwrite: true });
+    const apiKeyFile = project.createSourceFile(`${outputPath}/common/decorators/auth/apiKey.decorator.ts`, '', { overwrite: true });
     apiKeyFile.addImportDeclaration({ namedImports: ['applyDecorators'], moduleSpecifier: '@nestjs/common' });
     apiKeyFile.addImportDeclaration({ namedImports: ['ApiSecurity', 'ApiUnauthorizedResponse'], moduleSpecifier: '@nestjs/swagger' });
     

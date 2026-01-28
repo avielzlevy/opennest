@@ -3,13 +3,20 @@ import { Project, SourceFile } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
 
 // Helper imports
-import { groupOperationsByTag, HTTP_METHODS } from '../src/utils/operation-helpers';
-import { extractBodyDtoName, extractResponseDtoName } from '../src/utils/schema-helpers';
-import { capitalize, buildDtoImportPath } from '../src/utils/formatting-helpers';
-import { isParameterObject, isSchemaObject } from '../src/utils/type-guards';
+import { groupOperationsByTag, HTTP_METHODS } from "../utils/operation-helpers";
+import {
+  extractBodyDtoName,
+  extractResponseDtoName,
+} from "../utils/schema-helpers";
+import { capitalize, buildDtoImportPath } from "../utils/formatting-helpers";
+import { isParameterObject, isSchemaObject } from "../utils/type-guards";
 
 export class DecoratorGenerator implements IGenerator {
-  public generate(document: OpenAPIV3.Document, project: Project): void {
+  public generate(
+    document: OpenAPIV3.Document,
+    project: Project,
+    outputPath: string = "./generated",
+  ): void {
     if (!document.paths) return;
 
     const grouped = groupOperationsByTag(document.paths);
@@ -19,7 +26,7 @@ export class DecoratorGenerator implements IGenerator {
       const fileName = resourceName.toLowerCase();
 
       const sourceFile = project.createSourceFile(
-        `src/decorators/${fileName}.decorator.ts`,
+        `${outputPath}/decorators/${fileName}.decorator.ts`,
         "",
         { overwrite: true },
       );
@@ -116,11 +123,13 @@ export class DecoratorGenerator implements IGenerator {
             if (!isParameterObject(param)) continue;
 
             // Determine parameter type
-            let paramType = 'String';
+            let paramType = "String";
             if (param.schema && isSchemaObject(param.schema)) {
-              paramType = param.schema.type === 'integer' || param.schema.type === 'number'
-                ? 'Number'
-                : 'String';
+              paramType =
+                param.schema.type === "integer" ||
+                param.schema.type === "number"
+                  ? "Number"
+                  : "String";
             }
 
             if (param.in === "query") {
@@ -170,7 +179,7 @@ export class DecoratorGenerator implements IGenerator {
 
     // Check if import already exists
     const existingImport = sourceFile.getImportDeclaration(
-      d => d.getModuleSpecifierValue() === importPath
+      (d) => d.getModuleSpecifierValue() === importPath,
     );
 
     if (!existingImport) {

@@ -6,6 +6,7 @@
 import { promises as fs } from "fs";
 import { resolve, isAbsolute } from "path";
 import SwaggerParser from "@apidevtools/swagger-parser";
+import YAML from "js-yaml";
 import { fetchWithRetry, type FetchOptions } from "./retry-handler";
 
 /**
@@ -20,7 +21,9 @@ export class SpecNotFoundError extends Error {
 
 export class NetworkError extends Error {
   constructor(url: string, originalError: Error) {
-    super(`Failed to fetch specification from ${url}: ${originalError.message}`);
+    super(
+      `Failed to fetch specification from ${url}: ${originalError.message}`,
+    );
     this.name = "NetworkError";
   }
 }
@@ -58,7 +61,7 @@ async function fetchSpec(url: string): Promise<string> {
     if (!response.ok) {
       throw new NetworkError(
         url,
-        new Error(`HTTP ${response.status}: ${response.statusText}`)
+        new Error(`HTTP ${response.status}: ${response.statusText}`),
       );
     }
 
@@ -70,7 +73,7 @@ async function fetchSpec(url: string): Promise<string> {
 
     throw new NetworkError(
       url,
-      error instanceof Error ? error : new Error(String(error))
+      error instanceof Error ? error : new Error(String(error)),
     );
   }
 }
@@ -82,16 +85,14 @@ async function fetchSpec(url: string): Promise<string> {
 async function readLocalFile(filePath: string): Promise<string> {
   try {
     // Resolve relative paths from current working directory
-    const resolvedPath = isAbsolute(filePath) ? filePath : resolve(process.cwd(), filePath);
+    const resolvedPath = isAbsolute(filePath)
+      ? filePath
+      : resolve(process.cwd(), filePath);
 
     const content = await fs.readFile(resolvedPath, "utf-8");
     return content;
   } catch (error) {
-    if (
-      error instanceof Error &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
       throw new SpecNotFoundError(filePath);
     }
 
@@ -105,17 +106,35 @@ async function readLocalFile(filePath: string): Promise<string> {
  */
 async function parseSpec(
   content: string,
-  specSource: string
+  specSource: string,
 ): Promise<Record<string, unknown>> {
   try {
-    // Parse the spec using swagger-parser
-    // It automatically detects JSON vs YAML and validates against OpenAPI schema
-    const api = await SwaggerParser.validate(content);
+    // Attempt to parse the raw content into an object first.
+    // Try JSON, then YAML. SwaggerParser.validate accepts an object.
+    let parsed: unknown;
+
+    // Try JSON
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      // If JSON parsing failed, try YAML
+      try {
+        // `YAML.load` will parse both JSON-like and YAML content
+        parsed = YAML.load(content);
+      } catch (err) {
+        throw new MalformedSpecError(
+          specSource,
+          err instanceof Error ? err : new Error(String(err)),
+        );
+      }
+    }
+
+    const api = await SwaggerParser.validate(parsed as any);
     return api as Record<string, unknown>;
   } catch (error) {
     throw new MalformedSpecError(
       specSource,
-      error instanceof Error ? error : new Error(String(error))
+      error instanceof Error ? error : new Error(String(error)),
     );
   }
 }
@@ -130,7 +149,9 @@ async function parseSpec(
  * @throws NetworkError if URL fetch fails
  * @throws MalformedSpecError if specification is invalid
  */
-export async function loadSpec(specSource: string): Promise<Record<string, unknown>> {
+export async function loadSpec(
+  specSource: string,
+): Promise<Record<string, unknown>> {
   try {
     let content: string;
 
@@ -159,7 +180,7 @@ export async function loadSpec(specSource: string): Promise<Record<string, unkno
     // Wrap unexpected errors
     throw new MalformedSpecError(
       specSource,
-      error instanceof Error ? error : new Error(String(error))
+      error instanceof Error ? error : new Error(String(error)),
     );
   }
 }

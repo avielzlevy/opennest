@@ -13,7 +13,7 @@ export interface ISpecParser {
  * Port: Responsible for the logic of converting schemas to AST.
  */
 export interface IGenerator {
-  generate(document: OpenAPIV3.Document, project: Project): void;
+  generate(document: OpenAPIV3.Document, project: Project, outputPath?: string): void;
 }
 
 /**

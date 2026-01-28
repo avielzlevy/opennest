@@ -3,26 +3,26 @@
  * Orchestrates the main application flow: loading specs, checking conflicts, prompting users, and generating code
  */
 
-import { confirm } from '@inquirer/prompts';
-import { Project } from 'ts-morph';
-import { OpenAPIV3 } from 'openapi-types';
-import { loadSpec } from './spec-loader';
+import { confirm } from "@inquirer/prompts";
+import { Project } from "ts-morph";
+import { OpenAPIV3 } from "openapi-types";
+import { loadSpec } from "./spec-loader";
 import {
   checkFileConflicts,
   generateConflictPrompt,
   getFilesToGenerate,
-} from './file-conflict-handler';
+} from "./file-conflict-handler";
 import {
   displaySuccessMessage,
   displayStepMessage,
   displayWarningMessage,
   displayInfoMessage,
-} from './error-handler';
-import { TypeMapper } from '../../utils/type-mapper';
-import { DtoGenerator } from '../../generators/dto.generator';
-import { ControllerGenerator } from '../../generators/controller.generator';
-import { CommonGenerator } from '../../generators/common.generator';
-import { DecoratorGenerator } from '../../generators/decorator.generator';
+} from "./error-handler";
+import { TypeMapper } from "../../utils/type-mapper";
+import { DtoGenerator } from "../generators/dto.generator";
+import { ControllerGenerator } from "../generators/controller.generator";
+import { CommonGenerator } from "../generators/common.generator";
+import { DecoratorGenerator } from "../generators/decorator.generator";
 
 /**
  * CLI Arguments passed to the application
@@ -53,18 +53,18 @@ export class CliApplication {
     // Load specification
     displayStepMessage(`Loading specification from: ${args.spec}`);
     const spec = await loadSpec(args.spec);
-    displaySuccessMessage('Specification loaded successfully');
+    displaySuccessMessage("Specification loaded successfully");
 
     if (args.verbose) {
       displayInfoMessage(
-        `Specification contains paths and schemas for code generation`
+        `Specification contains paths and schemas for code generation`,
       );
     }
 
     // Determine files to generate
     const filesToGenerate = getFilesToGenerate(spec);
     displayStepMessage(
-      `Ready to generate ${filesToGenerate.length} file(s) to: ${args.output}`
+      `Ready to generate ${filesToGenerate.length} file(s) to: ${args.output}`,
     );
 
     if (args.verbose) {
@@ -93,10 +93,10 @@ export class CliApplication {
    * Display application header
    */
   private displayHeader(): void {
-    console.log('');
-    console.log('  OpenNest v1.0.0');
-    console.log('  Generate NestJS code from OpenAPI specifications');
-    console.log('');
+    console.log("");
+    console.log("  OpenNest v1.0.0");
+    console.log("  Generate NestJS code from OpenAPI specifications");
+    console.log("");
   }
 
   /**
@@ -106,38 +106,36 @@ export class CliApplication {
    */
   private async handleFileConflicts(
     conflicts: Array<{ path: string; size: number; mtime: Date }>,
-    args: CliApplicationArgs
+    args: CliApplicationArgs,
   ): Promise<void> {
     if (args.force) {
       if (args.verbose) {
         displayWarningMessage(
-          `Force mode enabled. Will overwrite ${conflicts.length} existing file(s).`
+          `Force mode enabled. Will overwrite ${conflicts.length} existing file(s).`,
         );
       }
       return;
     }
 
     // Prompt user for confirmation
-    displayWarningMessage(
-      `${conflicts.length} file(s) would be overwritten`
-    );
-    console.log('');
+    displayWarningMessage(`${conflicts.length} file(s) would be overwritten`);
+    console.log("");
 
     const promptMessage = generateConflictPrompt(conflicts, args.output);
     console.log(promptMessage);
-    console.log('');
+    console.log("");
 
     const shouldContinue = await confirm({
-      message: 'Do you want to continue?',
+      message: "Do you want to continue?",
       default: false,
     });
 
     if (!shouldContinue) {
-      throw new Error('Generation cancelled by user');
+      throw new Error("Generation cancelled by user");
     }
 
     if (args.verbose) {
-      displaySuccessMessage('User confirmed overwriting files');
+      displaySuccessMessage("User confirmed overwriting files");
     }
   }
 
@@ -150,14 +148,14 @@ export class CliApplication {
   private displayGenerationSummary(
     args: CliApplicationArgs,
     filesToGenerate: string[],
-    conflicts: Array<{ path: string; size: number; mtime: Date }>
+    conflicts: Array<{ path: string; size: number; mtime: Date }>,
   ): void {
-    console.log('');
-    displaySuccessMessage('Ready to generate code');
+    console.log("");
+    displaySuccessMessage("Ready to generate code");
 
     if (args.verbose) {
-      console.log('');
-      displayInfoMessage('Generation Summary:');
+      console.log("");
+      displayInfoMessage("Generation Summary:");
       console.log(`  Files to generate: ${filesToGenerate.length}`);
       console.log(`  Output directory: ${args.output}`);
 
@@ -172,16 +170,14 @@ export class CliApplication {
       }
 
       if (conflicts.length > 0) {
-        console.log(
-          `  Files to overwrite: ${conflicts.length}`
-        );
+        console.log(`  Files to overwrite: ${conflicts.length}`);
       }
 
-      console.log(`  Force mode: ${args.force ? 'enabled' : 'disabled'}`);
-      console.log('');
+      console.log(`  Force mode: ${args.force ? "enabled" : "disabled"}`);
+      console.log("");
     }
 
-    displayStepMessage('Next: Code generation (Phase 2)');
+    displayStepMessage("Next: Code generation (Phase 2)");
   }
 
   /**
@@ -191,14 +187,16 @@ export class CliApplication {
    */
   private async generateCode(
     spec: Record<string, unknown>,
-    args: CliApplicationArgs
+    args: CliApplicationArgs,
   ): Promise<void> {
     try {
-      displayStepMessage('Generating code...');
+      displayStepMessage("Generating code...");
 
       // Initialize AST Project
       const project = new Project({
-        tsConfigFilePath: './tsconfig.json',
+        compilerOptions: {
+          outDir: args.output,
+        },
         skipAddingFilesFromTsConfig: true,
       });
 
@@ -213,28 +211,28 @@ export class CliApplication {
       const document = spec as unknown as OpenAPIV3.Document;
 
       if (args.verbose) {
-        displayInfoMessage('Generating common artifacts...');
+        displayInfoMessage("Generating common artifacts...");
       }
-      commonGen.generate(document, project);
+      commonGen.generate(document, project, args.output);
 
       if (args.verbose) {
-        displayInfoMessage('Generating DTOs...');
+        displayInfoMessage("Generating DTOs...");
       }
-      dtoGen.generate(document, project);
+      dtoGen.generate(document, project, args.output);
 
       if (args.verbose) {
-        displayInfoMessage('Generating endpoint decorators...');
+        displayInfoMessage("Generating endpoint decorators...");
       }
-      decoratorGen.generate(document, project);
+      decoratorGen.generate(document, project, args.output);
 
       if (args.verbose) {
-        displayInfoMessage('Generating controllers...');
+        displayInfoMessage("Generating controllers...");
       }
-      controllerGen.generate(document, project);
+      controllerGen.generate(document, project, args.output);
 
       // Format and save files
       if (args.verbose) {
-        displayInfoMessage('Formatting source files...');
+        displayInfoMessage("Formatting source files...");
       }
       for (const file of project.getSourceFiles()) {
         file.formatText({
@@ -249,11 +247,11 @@ export class CliApplication {
 
       const fileCount = project.getSourceFiles().length;
       displaySuccessMessage(
-        `Generated ${fileCount} file(s) successfully to: ${args.output}`
+        `Generated ${fileCount} file(s) successfully to: ${args.output}`,
       );
     } catch (error) {
       throw new Error(
-        `Code generation failed: ${error instanceof Error ? error.message : String(error)}`
+        `Code generation failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }
