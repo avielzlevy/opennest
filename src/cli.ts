@@ -1,33 +1,6 @@
 import { parseArgs } from './cli/argument-parser';
-import { displayError, displaySuccessMessage, displayStepMessage } from './cli/error-handler';
-import { CliError } from './errors/cli-error';
-
-/**
- * Stub CliApplication for Phase 1 bootstrap
- * Will be expanded in subsequent phases to handle actual generation
- */
-class CliApplication {
-  /**
-   * Run the CLI application with parsed arguments
-   * @param args - Parsed CLI arguments
-   */
-  async run(args: any): Promise<void> {
-    displayStepMessage(`Processing spec: ${args.spec}`);
-    displayStepMessage(`Output directory: ${args.output}`);
-
-    if (args.verbose) {
-      displayStepMessage('Verbose mode enabled');
-    }
-
-    if (args.force) {
-      displayStepMessage('Force overwrite enabled');
-    }
-
-    // Stub implementation - will be replaced in Phase 2
-    displaySuccessMessage('CLI application initialized successfully!');
-    displayStepMessage('Next: Load and parse spec file (Phase 2)');
-  }
-}
+import { displayError } from './cli/error-handler';
+import { CliApplication } from './cli/cli-application';
 
 /**
  * CLI Bootstrap and Entry Point
