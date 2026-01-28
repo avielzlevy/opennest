@@ -4,6 +4,8 @@
  */
 
 import { confirm } from '@inquirer/prompts';
+import { Project } from 'ts-morph';
+import { OpenAPIV3 } from 'openapi-types';
 import { loadSpec } from './spec-loader';
 import {
   checkFileConflicts,
@@ -16,6 +18,11 @@ import {
   displayWarningMessage,
   displayInfoMessage,
 } from './error-handler';
+import { TypeMapper } from '../../utils/type-mapper';
+import { DtoGenerator } from '../../generators/dto.generator';
+import { ControllerGenerator } from '../../generators/controller.generator';
+import { CommonGenerator } from '../../generators/common.generator';
+import { DecoratorGenerator } from '../../generators/decorator.generator';
 
 /**
  * CLI Arguments passed to the application
@@ -74,6 +81,9 @@ export class CliApplication {
     if (conflicts.length > 0) {
       await this.handleFileConflicts(conflicts, args);
     }
+
+    // Generate code
+    await this.generateCode(spec, args);
 
     // Display generation summary
     this.displayGenerationSummary(args, filesToGenerate, conflicts);
@@ -172,5 +182,79 @@ export class CliApplication {
     }
 
     displayStepMessage('Next: Code generation (Phase 2)');
+  }
+
+  /**
+   * Generate code from the OpenAPI specification
+   * @param spec - The loaded OpenAPI specification
+   * @param args - CLI arguments
+   */
+  private async generateCode(
+    spec: Record<string, unknown>,
+    args: CliApplicationArgs
+  ): Promise<void> {
+    try {
+      displayStepMessage('Generating code...');
+
+      // Initialize AST Project
+      const project = new Project({
+        tsConfigFilePath: './tsconfig.json',
+        skipAddingFilesFromTsConfig: true,
+      });
+
+      // Instantiate generators
+      const typeMapper = new TypeMapper();
+      const commonGen = new CommonGenerator();
+      const dtoGen = new DtoGenerator(typeMapper);
+      const decoratorGen = new DecoratorGenerator();
+      const controllerGen = new ControllerGenerator();
+
+      // Execute generation pipeline
+      const document = spec as unknown as OpenAPIV3.Document;
+
+      if (args.verbose) {
+        displayInfoMessage('Generating common artifacts...');
+      }
+      commonGen.generate(document, project);
+
+      if (args.verbose) {
+        displayInfoMessage('Generating DTOs...');
+      }
+      dtoGen.generate(document, project);
+
+      if (args.verbose) {
+        displayInfoMessage('Generating endpoint decorators...');
+      }
+      decoratorGen.generate(document, project);
+
+      if (args.verbose) {
+        displayInfoMessage('Generating controllers...');
+      }
+      controllerGen.generate(document, project);
+
+      // Format and save files
+      if (args.verbose) {
+        displayInfoMessage('Formatting source files...');
+      }
+      for (const file of project.getSourceFiles()) {
+        file.formatText({
+          ensureNewLineAtEndOfFile: true,
+          indentSize: 2,
+          convertTabsToSpaces: true,
+          placeOpenBraceOnNewLineForFunctions: false,
+          placeOpenBraceOnNewLineForControlBlocks: false,
+        });
+      }
+      await project.save();
+
+      const fileCount = project.getSourceFiles().length;
+      displaySuccessMessage(
+        `Generated ${fileCount} file(s) successfully to: ${args.output}`
+      );
+    } catch (error) {
+      throw new Error(
+        `Code generation failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
   }
 }
