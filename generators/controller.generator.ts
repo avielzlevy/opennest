@@ -1,8 +1,30 @@
 import { OpenAPIV3 } from "openapi-types";
-import { Project, Scope } from "ts-morph";
+import { Project, Scope, SourceFile } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
 
-const HTTP_METHODS = ["get", "post", "put", "delete", "patch"] as const;
+// Import extracted helpers
+import {
+  groupOperationsByTag,
+  getOperationName,
+  buildEndpointDecoratorName,
+  buildResourceName,
+  buildControllerClassName,
+  buildServiceInterfaceName,
+  HttpMethod,
+} from "../src/utils/operation-helpers";
+import {
+  buildHttpRoute,
+  sanitizeParamName,
+  mapParameterLocation,
+  inferParameterType,
+  buildControllerBasePath,
+} from "../src/utils/route-helpers";
+import {
+  extractBodyDtoName,
+  extractResponseDtoName,
+} from "../src/utils/schema-helpers";
+import { capitalize, buildDtoImportPath } from "../src/utils/formatting-helpers";
+import { isParameterObject } from "../src/utils/type-guards";
 
 export class ControllerGenerator implements IGenerator {
   constructor() {}
@@ -10,12 +32,12 @@ export class ControllerGenerator implements IGenerator {
   public generate(document: OpenAPIV3.Document, project: Project): void {
     if (!document.paths) return;
 
-    const grouped = this.groupOperationsByTag(document.paths);
+    const grouped = groupOperationsByTag(document.paths);
 
     for (const [tagName, operations] of Object.entries(grouped)) {
-      const resourceName = tagName.replace(/\s+/g, "");
-      const className = `${resourceName}Controller`;
-      const serviceInterfaceName = `I${resourceName}Service`;
+      const resourceName = buildResourceName(tagName);
+      const className = buildControllerClassName(resourceName);
+      const serviceInterfaceName = buildServiceInterfaceName(resourceName);
 
       const sourceFile = project.createSourceFile(
         `src/controllers/${resourceName.toLowerCase()}.controller.ts`,
@@ -59,7 +81,10 @@ export class ControllerGenerator implements IGenerator {
         isExported: true,
         decorators: [
           { name: "ApiTags", arguments: [`'${tagName}'`] },
-          { name: "Controller", arguments: [`'api/${tagName.toLowerCase()}'`] },
+          {
+            name: "Controller",
+            arguments: [`'${buildControllerBasePath(tagName)}'`],
+          },
         ],
       });
 
@@ -80,22 +105,26 @@ export class ControllerGenerator implements IGenerator {
       for (const op of operations) {
         const { method: httpMethod, path, operation } = op;
 
-        let methodName =
-          operation.operationId || `${httpMethod}${resourceName}`;
-        if (methodName.includes("_")) {
-          methodName = methodName.split("_")[1];
-        }
+        const methodName = getOperationName(
+          operation,
+          resourceName,
+          httpMethod,
+        );
 
         // We calculate DTOs to define the Controller Signature, but we don't decorate with them
-        const bodyDto = this.extractBodyDto(
-          operation.requestBody as OpenAPIV3.RequestBodyObject,
+        const bodyDto = extractBodyDtoName(
+          operation.requestBody as OpenAPIV3.RequestBodyObject | undefined,
         );
-        const responseDto = this.extractResponseDto(operation.responses);
+        const responseDto = extractResponseDtoName(operation.responses);
 
         // Imports for DTOs (used in TS types)
-        if (bodyDto) this.addDtoImport(sourceFile, bodyDto);
-        if (responseDto && responseDto !== "any")
-          this.addDtoImport(sourceFile, responseDto.replace("[]", ""));
+        if (bodyDto) {
+          this.addDtoImport(sourceFile, bodyDto);
+        }
+        if (responseDto && responseDto !== "any" && responseDto !== "void") {
+          const cleanDto = responseDto.replace("[]", "");
+          this.addDtoImport(sourceFile, cleanDto);
+        }
 
         // 4. Update Interface
         serviceInterface.addMethod({
@@ -104,8 +133,8 @@ export class ControllerGenerator implements IGenerator {
           returnType: `Promise<${responseDto}>`,
         });
 
-        // --- NEW: Generate the Endpoint Decorator Name ---
-        const endpointDecoratorName = `${this.capitalize(methodName)}Endpoint`;
+        // --- Generate the Endpoint Decorator Name ---
+        const endpointDecoratorName = buildEndpointDecoratorName(methodName);
 
         // Import the generated decorator
         sourceFile.addImportDeclaration({
@@ -120,10 +149,10 @@ export class ControllerGenerator implements IGenerator {
           returnType: `Promise<${responseDto}>`,
           decorators: [
             {
-              name: this.capitalize(httpMethod),
-              arguments: [`'${this.cleanPath(path)}'`],
+              name: capitalize(httpMethod),
+              arguments: [`'${buildHttpRoute(path)}'`],
             },
-            { name: endpointDecoratorName, arguments: [] }, // <--- THE CLEAN DECORATOR
+            { name: endpointDecoratorName, arguments: [] },
           ],
         });
 
@@ -132,29 +161,28 @@ export class ControllerGenerator implements IGenerator {
         const addedParams = new Set<string>();
 
         if (operation.parameters) {
-          for (const param of operation.parameters as OpenAPIV3.ParameterObject[]) {
-            const sanitizedParamName = this.sanitizeParamName(param.name);
-            if (addedParams.has(sanitizedParamName)) continue;
-            addedParams.add(sanitizedParamName);
+          for (const param of operation.parameters) {
+            // Use type guard to safely access parameter properties
+            if (!isParameterObject(param)) {
+              continue;
+            }
 
-            let decoratorName = "Query";
-            if (param.in === "path") decoratorName = "Param";
-            if (param.in === "header") decoratorName = "Headers";
+            const sanitized = sanitizeParamName(param.name);
+            if (addedParams.has(sanitized)) continue;
+            addedParams.add(sanitized);
 
-            const paramType =
-              (param.schema as OpenAPIV3.SchemaObject).type === "integer"
-                ? "number"
-                : "string";
+            const decoratorName = mapParameterLocation(param.in);
+            const paramType = inferParameterType(param.schema);
 
             methodDecl.addParameter({
-              name: sanitizedParamName,
+              name: sanitized,
               type: paramType,
               decorators: [
                 { name: decoratorName, arguments: [`'${param.name}'`] },
               ],
             });
 
-            methodCallArgs.push(sanitizedParamName);
+            methodCallArgs.push(sanitized);
           }
         }
 
@@ -178,77 +206,23 @@ export class ControllerGenerator implements IGenerator {
     }
   }
 
-  // --- Helpers (Duplicated to allow strict Separation of Concerns) ---
-
-  private groupOperationsByTag(paths: OpenAPIV3.PathsObject) {
-    const groups: Record<string, any[]> = {};
-    for (const [pathUrl, pathItem] of Object.entries(paths)) {
-      if (!pathItem) continue;
-      HTTP_METHODS.forEach((method) => {
-        const op = pathItem[method];
-        if (op) {
-          const tag = op.tags?.[0] || "Default";
-          if (!groups[tag]) groups[tag] = [];
-          groups[tag].push({ method, path: pathUrl, operation: op });
-        }
-      });
-    }
-    return groups;
-  }
-
-  private cleanPath(path: string): string {
-    const parts = path.split("/").filter((p) => p);
-    if (parts[0] === "api") parts.shift();
-    parts.shift();
-    return parts
-      .map((p) => (p.startsWith("{") ? `:${p.slice(1, -1)}` : p))
-      .join("/");
-  }
-
-  private sanitizeParamName(name: string): string {
-    return name.replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
-  }
-
-  private extractBodyDto(
-    body: OpenAPIV3.RequestBodyObject | undefined,
-  ): string | null {
-    if (!body?.content?.["application/json"]?.schema) return null;
-    const schema = body.content["application/json"]
-      .schema as OpenAPIV3.ReferenceObject;
-    const ref = schema.$ref ? schema.$ref.split("/").pop()! : null;
-    return ref === "Object" ? "ObjectDto" : ref;
-  }
-
-  private extractResponseDto(responses: OpenAPIV3.ResponsesObject): string {
-    const success = responses["200"] || responses["201"];
-    if (!success) return "void";
-    if ("content" in success && success.content?.["application/json"]?.schema) {
-      const schema = success.content["application/json"].schema as any;
-      let refName = "any";
-      if (schema.$ref) refName = schema.$ref.split("/").pop()!;
-      else if (schema.type === "array" && schema.items.$ref)
-        refName = `${schema.items.$ref.split("/").pop()}[]`;
-      return refName.replace("Object", "ObjectDto");
-    }
-    return "any";
-  }
-
-  private addDtoImport(sourceFile: any, dtoName: string) {
+  // Helper to add DTO imports (inline logic, not complex enough to extract)
+  private addDtoImport(sourceFile: SourceFile, dtoName: string): void {
     if (dtoName === "any" || dtoName === "void") return;
+
     const cleanName = dtoName.replace("[]", "");
-    if (
-      !sourceFile.getImportDeclaration((d: any) =>
-        d.getModuleSpecifierValue().includes(cleanName),
-      )
-    ) {
+    const importPath = buildDtoImportPath(cleanName);
+
+    // Check if import already exists
+    const existingImport = sourceFile.getImportDeclaration(
+      (d) => d.getModuleSpecifierValue() === importPath,
+    );
+
+    if (!existingImport) {
       sourceFile.addImportDeclaration({
         namedImports: [cleanName],
-        moduleSpecifier: `../dtos/${cleanName}.dto`,
+        moduleSpecifier: importPath,
       });
     }
-  }
-
-  private capitalize(s: string) {
-    return s.charAt(0).toUpperCase() + s.slice(1);
   }
 }
