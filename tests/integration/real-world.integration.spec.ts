@@ -100,16 +100,14 @@ describe("Real-World Integration Tests", () => {
       // Validate Decorators were generated
       expect(structure["generated/decorators/pets.decorator.ts"]).toBeDefined();
 
-      // Snapshot test: File paths and class names only (avoid circular refs)
-      const snapshotData = Object.keys(structure).sort().reduce((acc, key) => {
-        acc[key] = {
-          classes: structure[key].classes,
-          importCount: structure[key].imports.length,
-        };
-        return acc;
-      }, {} as Record<string, { classes: string[]; importCount: number }>);
+      // Snapshot test: File paths and class names (as formatted string to avoid serializer issues)
+      const fileList = Object.keys(structure).sort().map(key => {
+        const classes = structure[key].classes.join(", ");
+        const importCount = structure[key].imports.length;
+        return `${key}: [${classes}] (${importCount} imports)`;
+      }).join("\n");
 
-      expect(snapshotData).toMatchSnapshot("petstore-file-structure");
+      expect(fileList).toMatchSnapshot("petstore-file-structure");
     });
 
     it("should generate all CRUD operations for pets resource", () => {
@@ -203,16 +201,14 @@ describe("Real-World Integration Tests", () => {
       expect(structure["generated/decorators/store.decorator.ts"]).toBeDefined();
       expect(structure["generated/decorators/user.decorator.ts"]).toBeDefined();
 
-      // Snapshot test: File paths and class names only (avoid circular refs)
-      const snapshotData = Object.keys(structure).sort().reduce((acc, key) => {
-        acc[key] = {
-          classes: structure[key].classes,
-          importCount: structure[key].imports.length,
-        };
-        return acc;
-      }, {} as Record<string, { classes: string[]; importCount: number }>);
+      // Snapshot test: File paths and class names (as formatted string to avoid serializer issues)
+      const fileList = Object.keys(structure).sort().map(key => {
+        const classes = structure[key].classes.join(", ");
+        const importCount = structure[key].imports.length;
+        return `${key}: [${classes}] (${importCount} imports)`;
+      }).join("\n");
 
-      expect(snapshotData).toMatchSnapshot("petstore-expanded-file-structure");
+      expect(fileList).toMatchSnapshot("petstore-expanded-file-structure");
     });
 
     it("should generate controllers for all three resource types", () => {
@@ -243,8 +239,11 @@ describe("Real-World Integration Tests", () => {
         user: userController!.getClass("UserController")!.getMethods().map(m => m.getName()).sort(),
       };
 
-      // Snapshot test: All controller methods
-      expect(allMethods).toMatchSnapshot("petstore-expanded-controller-methods");
+      // Snapshot test: All controller methods (as formatted string)
+      const methodList = Object.entries(allMethods)
+        .map(([controller, methods]) => `${controller}: ${methods.join(", ")}`)
+        .join("\n");
+      expect(methodList).toMatchSnapshot("petstore-expanded-controller-methods");
     });
 
     it("should handle nested schemas with proper imports", () => {
@@ -287,31 +286,22 @@ describe("Real-World Integration Tests", () => {
       const addressesProp = userClass!.getProperty("addresses");
       expect(addressesProp).toBeDefined();
 
-      // Snapshot test: Property names and types (not full AST to avoid circular refs)
-      const nestedProps = {
-        orderItems: itemsProp ? {
-          name: itemsProp.getName(),
-          type: itemsProp.getType().getText(),
-          hasDecorators: itemsProp.getDecorators().length > 0,
-        } : null,
-        orderShippingAddress: shippingAddressProp ? {
-          name: shippingAddressProp.getName(),
-          type: shippingAddressProp.getType().getText(),
-          hasDecorators: shippingAddressProp.getDecorators().length > 0,
-        } : null,
-        addressCoordinates: coordinatesProp ? {
-          name: coordinatesProp.getName(),
-          type: coordinatesProp.getType().getText(),
-          hasDecorators: coordinatesProp.getDecorators().length > 0,
-        } : null,
-        userAddresses: addressesProp ? {
-          name: addressesProp.getName(),
-          type: addressesProp.getType().getText(),
-          hasDecorators: addressesProp.getDecorators().length > 0,
-        } : null,
-      };
+      // Snapshot test: Property names and types (as formatted string)
+      const propDetails: string[] = [];
+      if (itemsProp) {
+        propDetails.push(`orderItems: ${itemsProp.getName()} | type: ${itemsProp.getType().getText()} | decorators: ${itemsProp.getDecorators().length}`);
+      }
+      if (shippingAddressProp) {
+        propDetails.push(`orderShippingAddress: ${shippingAddressProp.getName()} | type: ${shippingAddressProp.getType().getText()} | decorators: ${shippingAddressProp.getDecorators().length}`);
+      }
+      if (coordinatesProp) {
+        propDetails.push(`addressCoordinates: ${coordinatesProp.getName()} | type: ${coordinatesProp.getType().getText()} | decorators: ${coordinatesProp.getDecorators().length}`);
+      }
+      if (addressesProp) {
+        propDetails.push(`userAddresses: ${addressesProp.getName()} | type: ${addressesProp.getType().getText()} | decorators: ${addressesProp.getDecorators().length}`);
+      }
 
-      expect(nestedProps).toMatchSnapshot("petstore-expanded-nested-schemas");
+      expect(propDetails.join("\n")).toMatchSnapshot("petstore-expanded-nested-schemas");
     });
 
     it("should handle PATCH operation correctly", () => {
