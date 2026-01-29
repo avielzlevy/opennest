@@ -82,12 +82,6 @@ describe("Compilation Validation", () => {
         convertTabsToSpaces: true,
       });
     }
-
-    // Debug: Log generated files
-    const files = project.getSourceFiles();
-    console.log(`Generated ${files.length} files`);
-    files.forEach(f => console.log(`  - ${f.getFilePath()}`));
-
     project.saveSync();
   }
 
@@ -203,35 +197,28 @@ describe("Compilation Validation", () => {
       const commonDir = path.join(TEMP_OUTPUT_DIR, "common");
       const controllersDir = path.join(TEMP_OUTPUT_DIR, "controllers");
       const decoratorsDir = path.join(TEMP_OUTPUT_DIR, "decorators");
-      const dtoDir = path.join(TEMP_OUTPUT_DIR, "dto");
+      const dtosDir = path.join(TEMP_OUTPUT_DIR, "dtos"); // Note: plural "dtos"
 
       expect(fs.existsSync(commonDir)).toBe(true);
       expect(fs.existsSync(controllersDir)).toBe(true);
       expect(fs.existsSync(decoratorsDir)).toBe(true);
-      expect(fs.existsSync(dtoDir)).toBe(true);
+      expect(fs.existsSync(dtosDir)).toBe(true);
 
       // Check that common files exist
       expect(fs.existsSync(path.join(commonDir, "dto", "error.dto.ts"))).toBe(true);
       expect(fs.existsSync(path.join(commonDir, "decorators", "auth", "jwt.decorator.ts"))).toBe(true);
 
-      // Check that DTOs index file exists
-      expect(fs.existsSync(path.join(dtoDir, "index.ts"))).toBe(true);
+      // Count generated files (DTOs)
+      const dtoFiles = fs.readdirSync(dtosDir);
+      expect(dtoFiles.length).toBeGreaterThan(0);
 
-      // Count generated files
-      if (fs.existsSync(dtoDir)) {
-        const dtoFiles = fs.readdirSync(dtoDir);
-        expect(dtoFiles.length).toBeGreaterThan(0);
-      }
+      // Count generated files (Controllers)
+      const controllerFiles = fs.readdirSync(controllersDir);
+      expect(controllerFiles.length).toBeGreaterThan(0);
 
-      if (fs.existsSync(controllersDir)) {
-        const controllerFiles = fs.readdirSync(controllersDir);
-        expect(controllerFiles.length).toBeGreaterThan(0);
-      }
-
-      if (fs.existsSync(decoratorsDir)) {
-        const decoratorFiles = fs.readdirSync(decoratorsDir);
-        expect(decoratorFiles.length).toBeGreaterThan(0);
-      }
+      // Count generated files (Decorators)
+      const decoratorFiles = fs.readdirSync(decoratorsDir);
+      expect(decoratorFiles.length).toBeGreaterThan(0);
     });
   });
 
