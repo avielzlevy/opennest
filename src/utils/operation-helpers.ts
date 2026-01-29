@@ -1,5 +1,6 @@
 // src/utils/operation-helpers.ts
 import { OpenAPIV3 } from 'openapi-types';
+import { camelCase, pascalCase } from 'change-case';
 
 /**
  * Valid HTTP methods for OpenAPI operations
@@ -71,14 +72,25 @@ export function groupOperationsByTag(
 /**
  * Extracts the operation name from an operation object.
  * Uses operationId if present, falling back to generated name.
+ * Normalizes all operationIds to camelCase for consistency.
  *
  * @param operation - OpenAPI OperationObject
  * @param resourceName - The resource name (tag)
+ * @param httpMethod - HTTP method (used for fallback)
  * @returns Operation method name in camelCase
  *
  * @example
- * // With operationId
+ * // With operationId (Tag_Method format)
  * getOperationName({ operationId: 'Users_GetAll', responses: {} }, 'Users') → 'getAll'
+ *
+ * // With operationId (kebab-case)
+ * getOperationName({ operationId: 'create-user', responses: {} }, 'Users') → 'createUser'
+ *
+ * // With operationId (snake_case)
+ * getOperationName({ operationId: 'create_user', responses: {} }, 'Users') → 'createUser'
+ *
+ * // With special characters
+ * getOperationName({ operationId: 'special!@#$%Chars', responses: {} }, 'Users') → 'specialChars'
  *
  * // Without operationId (using HTTP method)
  * getOperationName({ responses: {} }, 'Users', 'get') → 'getUsers'
@@ -89,20 +101,24 @@ export function getOperationName(
   httpMethod?: HttpMethod
 ): string {
   if (operation.operationId) {
-    // Handle Tag_Method format
+    // Handle Tag_Method format: extract just the method part
     if (operation.operationId.includes('_')) {
       const parts = operation.operationId.split('_');
-      return parts[parts.length - 1];
+      const methodPart = parts[parts.length - 1];
+      // Normalize to camelCase to handle any case format
+      return camelCase(methodPart);
     }
-    return operation.operationId;
+
+    // Normalize operationId to camelCase (handles kebab-case, snake_case, special chars)
+    return camelCase(operation.operationId);
   }
 
   // Fallback: use HTTP method + resource name
   if (httpMethod) {
-    return `${httpMethod}${resourceName}`;
+    return camelCase(`${httpMethod} ${resourceName}`);
   }
 
-  return `operation${resourceName}`;
+  return camelCase(`operation ${resourceName}`);
 }
 
 /**
@@ -163,20 +179,23 @@ export function buildEndpointDecoratorName(methodName: string): string {
 
 /**
  * Normalizes a tag name by removing whitespace and special characters.
+ * Converts to PascalCase for use in class names.
  *
  * @param tag - OpenAPI tag
- * @returns Normalized tag name suitable for class/file names
+ * @returns Normalized tag name suitable for class/file names in PascalCase
  *
  * @example
  * normalizeTagName('User Management') → 'UserManagement'
- * normalizeTagName('API v2') → 'APIv2'
+ * normalizeTagName('API v2') → 'ApiV2'
+ * normalizeTagName('pet-store') → 'PetStore'
+ * normalizeTagName('special!@#$%chars') → 'SpecialChars'
  */
 export function normalizeTagName(tag: string): string {
   if (typeof tag !== 'string') {
     throw new Error(`normalizeTagName() requires a string, received: ${typeof tag}`);
   }
 
-  return tag.replace(/\s+/g, '');
+  return pascalCase(tag);
 }
 
 /**

@@ -1,0 +1,165 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for POST controller with request body 1`] = `
+"import { Body, Controller, Inject, Post } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CreateUserEndpoint } from "../decorators/users.decorator";
+import { CreateUserDto } from "../dtos/CreateUserDto.dto";
+import { User } from "../dtos/User.dto";
+
+export interface IUsersService {
+    createUser(...args: any[]): Promise<User>;
+}
+
+@ApiTags('users')
+@Controller('api/users')
+export class UsersController {
+    constructor(@Inject('IUsersService') private readonly service: IUsersService) {
+    }
+
+    @Post('')
+    @CreateUserEndpoint()
+    async createUser(@Body() body: CreateUserDto): Promise<User> {
+        return this.service.createUser(body);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for controller with complex parameters 1`] = `
+"import { Controller, Get, Headers, Inject, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { SearchEndpoint } from "../decorators/search.decorator";
+
+export interface ISearchService {
+    search(...args: any[]): Promise<any>;
+}
+
+@ApiTags('search')
+@Controller('api/search')
+export class SearchController {
+    constructor(@Inject('ISearchService') private readonly service: ISearchService) {
+    }
+
+    @Get('')
+    @SearchEndpoint()
+    async search(@Query('q') q: string, @Query('limit') limit: number, @Query('offset') offset: number, @Headers('X-Request-ID') XRequestID: string): Promise<any> {
+        return this.service.search(q, limit, offset, XRequestID);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for controller with multiple HTTP methods 1`] = `
+"import { Body, Controller, Delete, Get, Inject, Param, Put } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { DeleteProductEndpoint, GetProductEndpoint, UpdateProductEndpoint } from "../decorators/products.decorator";
+import { Product } from "../dtos/Product.dto";
+import { UpdateProductDto } from "../dtos/UpdateProductDto.dto";
+
+export interface IProductsService {
+    getProduct(...args: any[]): Promise<Product>;
+    updateProduct(...args: any[]): Promise<Product>;
+    deleteProduct(...args: any[]): Promise<void>;
+}
+
+@ApiTags('products')
+@Controller('api/products')
+export class ProductsController {
+    constructor(@Inject('IProductsService') private readonly service: IProductsService) {
+    }
+
+    @Get(':id')
+    @GetProductEndpoint()
+    async getProduct(@Param('id') id: number): Promise<Product> {
+        return this.service.getProduct(id);
+    }
+
+    @Put(':id')
+    @UpdateProductEndpoint()
+    async updateProduct(@Param('id') id: number, @Body() body: UpdateProductDto): Promise<Product> {
+        return this.service.updateProduct(id, body);
+    }
+
+    @Delete(':id')
+    @DeleteProductEndpoint()
+    async deleteProduct(@Param('id') id: number): Promise<void> {
+        return this.service.deleteProduct(id);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for petstore controller 1`] = `
+"import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CreatePetEndpoint, DeletePetEndpoint, GetPetByIdEndpoint, ListPetsEndpoint, UpdatePetEndpoint } from "../decorators/pets.decorator";
+import { NewPet } from "../dtos/NewPet.dto";
+import { Pet } from "../dtos/Pet.dto";
+
+export interface IPetsService {
+    listPets(...args: any[]): Promise<Pet[]>;
+    createPet(...args: any[]): Promise<Pet>;
+    getPetById(...args: any[]): Promise<Pet>;
+    updatePet(...args: any[]): Promise<Pet>;
+    deletePet(...args: any[]): Promise<any>;
+}
+
+@ApiTags('pets')
+@Controller('api/pets')
+export class PetsController {
+    constructor(@Inject('IPetsService') private readonly service: IPetsService) {
+    }
+
+    @Get('')
+    @ListPetsEndpoint()
+    async listPets(@Query('limit') limit: number, @Query('status') status: string): Promise<Pet[]> {
+        return this.service.listPets(limit, status);
+    }
+
+    @Post('')
+    @CreatePetEndpoint()
+    async createPet(@Body() body: NewPet): Promise<Pet> {
+        return this.service.createPet(body);
+    }
+
+    @Get(':petId')
+    @GetPetByIdEndpoint()
+    async getPetById(@Param('petId') petId: number): Promise<Pet> {
+        return this.service.getPetById(petId);
+    }
+
+    @Put(':petId')
+    @UpdatePetEndpoint()
+    async updatePet(@Param('petId') petId: number, @Body() body: NewPet): Promise<Pet> {
+        return this.service.updatePet(petId, body);
+    }
+
+    @Delete(':petId')
+    @DeletePetEndpoint()
+    async deletePet(@Param('petId') petId: number): Promise<any> {
+        return this.service.deletePet(petId);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for simple GET controller 1`] = `
+"import { Controller, Get, Inject, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { ListPetsEndpoint } from "../decorators/pets.decorator";
+import { Pet } from "../dtos/Pet.dto";
+
+export interface IPetsService {
+    listPets(...args: any[]): Promise<Pet[]>;
+}
+
+@ApiTags('pets')
+@Controller('api/pets')
+export class PetsController {
+    constructor(@Inject('IPetsService') private readonly service: IPetsService) {
+    }
+
+    @Get('')
+    @ListPetsEndpoint()
+    async listPets(@Query('limit') limit: number): Promise<Pet[]> {
+        return this.service.listPets(limit);
+    }
+}"
+`;

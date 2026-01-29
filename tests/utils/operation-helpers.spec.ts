@@ -120,20 +120,20 @@ describe('Operation Helpers', () => {
       expect(getOperationName(operation, 'Users')).toBe('getAll');
     });
 
-    it('should extract method from Tag_Method format', () => {
+    it('should extract method from Tag_Method format and normalize to camelCase', () => {
       const operation: OpenAPIV3.OperationObject = {
         operationId: 'Users_GetAll',
         responses: {},
       };
-      expect(getOperationName(operation, 'Users')).toBe('GetAll');
+      expect(getOperationName(operation, 'Users')).toBe('getAll');
     });
 
-    it('should handle Tag_Method with multiple underscores', () => {
+    it('should handle Tag_Method with multiple underscores and normalize to camelCase', () => {
       const operation: OpenAPIV3.OperationObject = {
         operationId: 'User_Management_GetAll',
         responses: {},
       };
-      expect(getOperationName(operation, 'UserManagement')).toBe('GetAll');
+      expect(getOperationName(operation, 'UserManagement')).toBe('getAll');
     });
 
     it('should generate fallback name from HTTP method', () => {
