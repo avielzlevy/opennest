@@ -8,4 +8,14 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  testMatch: [
+    "**/__tests__/**/*.ts",
+    "**/?(*.)+(spec|test).ts",
+  ],
+  snapshotFormat: {
+    escapeString: false,
+    printBasicPrototype: false,
+    indent: 2,
+  },
+  setupFilesAfterEnv: ["<rootDir>/tests/jest-setup.ts"],
 };
