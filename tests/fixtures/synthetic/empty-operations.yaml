@@ -1,0 +1,37 @@
+openapi: 3.0.0
+info:
+  title: Empty Operations Test
+  version: 1.0.0
+  description: Test operations without parameters or request/response bodies
+paths:
+  /health-check:
+    post:
+      operationId: healthCheck
+      tags:
+        - health
+      responses:
+        '204':
+          description: No Content
+  /status:
+    get:
+      operationId: getStatus
+      tags:
+        - health
+      responses:
+        '200':
+          description: Minimal status response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+  /ping:
+    head:
+      operationId: ping
+      tags:
+        - health
+      responses:
+        '200':
+          description: Pong

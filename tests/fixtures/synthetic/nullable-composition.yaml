@@ -1,0 +1,77 @@
+openapi: 3.0.0
+info:
+  title: Nullable Composition Test
+  version: 1.0.0
+  description: Test nullable with oneOf/anyOf/allOf compositions
+paths:
+  /pet/{id}:
+    get:
+      operationId: getPetById
+      tags:
+        - pet
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Pet (can be null or one of Cat/Dog)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+                nullable: true
+  /animal:
+    post:
+      operationId: createAnimal
+      tags:
+        - pet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+                - $ref: '#/components/schemas/Cat'
+                - $ref: '#/components/schemas/Dog'
+                - $ref: '#/components/schemas/Bird'
+              nullable: true
+      responses:
+        '201':
+          description: Animal created
+components:
+  schemas:
+    Cat:
+      type: object
+      required:
+        - name
+        - meow
+      properties:
+        name:
+          type: string
+        meow:
+          type: boolean
+    Dog:
+      type: object
+      required:
+        - name
+        - bark
+      properties:
+        name:
+          type: string
+        bark:
+          type: boolean
+    Bird:
+      type: object
+      required:
+        - name
+        - fly
+      properties:
+        name:
+          type: string
+        fly:
+          type: boolean

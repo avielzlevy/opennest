@@ -1,0 +1,32 @@
+openapi: 3.0.0
+info:
+  title: Array Without Items Test
+  version: 1.0.0
+  description: Test arrays without items definition
+paths:
+  /data:
+    get:
+      operationId: getData
+      tags:
+        - data
+      responses:
+        '200':
+          description: Data with ambiguous arrays
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataContainer'
+components:
+  schemas:
+    DataContainer:
+      type: object
+      properties:
+        items:
+          type: array
+          # No items definition - should default to unknown[] or any[]
+        values:
+          type: array
+          description: Array without items type
+        records:
+          # Implied array (plural name) but no type or items
+          description: Collection of records
