@@ -131,9 +131,27 @@ export class ControllerGenerator implements IGenerator {
         }
 
         // 4. Update Interface
+        // Build proper parameter types for service interface
+        const interfaceParams: Array<{ name: string; type: string }> = [];
+
+        if (operation.parameters) {
+          for (const param of operation.parameters) {
+            if (!isParameterObject(param)) continue;
+            const sanitized = sanitizeParamName(param.name);
+            const paramType = inferParameterType(param.schema);
+            interfaceParams.push({ name: sanitized, type: paramType });
+          }
+        }
+
+        if (bodyDto) {
+          interfaceParams.push({ name: "body", type: bodyDto });
+        }
+
         serviceInterface.addMethod({
           name: methodName,
-          parameters: [{ name: "...args", type: "any[]" }],
+          parameters: interfaceParams.length > 0
+            ? interfaceParams
+            : [{ name: "data", type: "unknown", hasQuestionToken: true }],
           returnType: `Promise<${responseDto}>`,
         });
 
