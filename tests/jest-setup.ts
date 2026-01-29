@@ -11,8 +11,28 @@
 jest.setTimeout(5000);
 
 // Custom snapshot serializer for sorting object keys (deterministic snapshots)
+// Skip circular references and complex AST objects to prevent stack overflow
 expect.addSnapshotSerializer({
-  test: (val) => val && typeof val === 'object' && !Array.isArray(val),
+  test: (val) => {
+    if (!val || typeof val !== 'object' || Array.isArray(val)) {
+      return false;
+    }
+
+    // Skip ts-morph AST objects (they have circular references)
+    const proto = Object.getPrototypeOf(val);
+    const constructorName = proto?.constructor?.name;
+    if (constructorName && (
+      constructorName.includes('Node') ||
+      constructorName.includes('Declaration') ||
+      constructorName.includes('SourceFile') ||
+      constructorName.includes('Project')
+    )) {
+      return false;
+    }
+
+    // Only apply to plain objects
+    return proto === Object.prototype || proto === null;
+  },
   print: (val, serialize) => {
     const obj = val as Record<string, unknown>;
     const sorted = Object.keys(obj)

@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Real-World Integration Tests File Path Conventions should follow consistent naming conventions across both specs: expanded-file-paths 1`] = `
+[
+  "generated/controllers/pets.controller.ts",
+  "generated/controllers/store.controller.ts",
+  "generated/controllers/user.controller.ts",
+  "generated/decorators/pets.decorator.ts",
+  "generated/decorators/store.decorator.ts",
+  "generated/decorators/user.decorator.ts",
+  "generated/dtos/Address.dto.ts",
+  "generated/dtos/ApiResponse.dto.ts",
+  "generated/dtos/Category.dto.ts",
+  "generated/dtos/Coordinates.dto.ts",
+  "generated/dtos/Error.dto.ts",
+  "generated/dtos/NewPet.dto.ts",
+  "generated/dtos/Order.dto.ts",
+  "generated/dtos/OrderItem.dto.ts",
+  "generated/dtos/Pet.dto.ts",
+  "generated/dtos/PetList.dto.ts",
+  "generated/dtos/Tag.dto.ts",
+  "generated/dtos/User.dto.ts",
+]
+`;
+
+exports[`Real-World Integration Tests File Path Conventions should follow consistent naming conventions across both specs: petstore-file-paths 1`] = `
+[
+  "generated/controllers/pets.controller.ts",
+  "generated/decorators/pets.decorator.ts",
+  "generated/dtos/Category.dto.ts",
+  "generated/dtos/Error.dto.ts",
+  "generated/dtos/NewPet.dto.ts",
+  "generated/dtos/Pet.dto.ts",
+  "generated/dtos/Tag.dto.ts",
+]
+`;
+
+exports[`Real-World Integration Tests Petstore Expanded Integration should handle PATCH operation correctly: petstore-expanded-patch-method 1`] = `
+"@Patch(':petId')
+    @PatchPetEndpoint()
+    async patchPet(@Param('petId') petId: number): Promise<Pet> {
+        return this.service.patchPet(petId);
+    }"
+`;
+
+exports[`Real-World Integration Tests Petstore Integration should generate all CRUD operations for pets resource: petstore-controller-methods 1`] = `
+[
+  "createPet",
+  "deletePet",
+  "getPetById",
+  "listPets",
+  "updatePet",
+]
+`;
+
+exports[`Real-World Integration Tests Petstore Integration should generate correct imports in controller: petstore-controller-imports 1`] = `
+[
+  "../decorators/pets.decorator: [CreatePetEndpoint, DeletePetEndpoint, GetPetByIdEndpoint, ListPetsEndpoint, UpdatePetEndpoint]",
+  "../dtos/NewPet.dto: [NewPet]",
+  "../dtos/Pet.dto: [Pet]",
+  "@nestjs/common: [Body, Controller, Delete, Get, Inject, Param, Post, Put, Query]",
+  "@nestjs/swagger: [ApiTags]",
+]
+`;
