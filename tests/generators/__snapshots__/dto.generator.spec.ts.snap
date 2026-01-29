@@ -1,0 +1,111 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with array: array-dto 1`] = `
+"import { IsArray, IsOptional } from "class-validator";
+
+export class ArrayDto {
+    @IsArray()
+    @IsOptional()
+    public tags?: string[] | undefined;
+    @IsArray()
+    @IsOptional()
+    public scores?: number[] | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with enum: enum-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsIn, IsNotEmpty } from "class-validator";
+
+export const ENUM_DTO_ROLE = {
+                                ADMIN: 'admin',
+    USER: 'user',
+    GUEST: 'guest'
+                            } as const;
+
+export type EnumDtoRole = (typeof ENUM_DTO_ROLE)[keyof typeof ENUM_DTO_ROLE];
+
+export class EnumDto {
+    @IsIn(Object.values(ENUM_DTO_ROLE))
+    @ApiProperty({"description":"User role","enum":["admin","user","guest"],"enumName":"EnumDtoRole"})
+    @IsNotEmpty()
+    public role!: EnumDtoRole;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with reference: reference-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
+import { CategoryDto } from "../dtos/CategoryDto.dto";
+
+export class ProductDto {
+    @IsString()
+    @ApiProperty()
+    @IsNotEmpty()
+    public name!: string;
+    @ValidateNested()
+    @Type(() => CategoryDto)
+    @IsOptional()
+    public category?: CategoryDto | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for complex DTO with all features: complex-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+
+export const COMPLEX_DTO_STATUS = {
+                                DRAFT: 'draft',
+    PUBLISHED: 'published'
+                            } as const;
+
+export type ComplexDtoStatus = (typeof COMPLEX_DTO_STATUS)[keyof typeof COMPLEX_DTO_STATUS];
+
+export class ComplexDto {
+    @IsNumber()
+    @ApiProperty({"description":"ID"})
+    @IsNotEmpty()
+    public id!: number;
+    @IsString()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public name?: string | undefined;
+    @IsBoolean()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public active?: boolean | undefined;
+    @IsIn(Object.values(COMPLEX_DTO_STATUS))
+    @ApiProperty({"enum":["draft","published"],"enumName":"ComplexDtoStatus"})
+    @IsNotEmpty()
+    public status!: ComplexDtoStatus;
+    @IsArray()
+    @IsOptional()
+    public tags?: string[] | undefined;
+    @IsObject()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public metadata?: Record<string, any> | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for simple DTO: simple-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+
+export class SimpleDto {
+    @IsString()
+    @ApiProperty({"description":"Unique identifier"})
+    @IsNotEmpty()
+    public id!: string;
+    @IsString()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public name?: string | undefined;
+}
+"
+`;
