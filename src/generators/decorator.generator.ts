@@ -96,10 +96,13 @@ export class DecoratorGenerator implements IGenerator {
           const cleanDto = responseDto.replace("[]", "");
           this.addDtoImport(sourceFile, cleanDto);
 
+          // Use aliased name if it conflicts with NestJS decorators
+          const dtoReference = this.getDtoReference(cleanDto);
+
           // Check if array
           const isArray = responseDto.endsWith("[]");
           decoratorArgs.push(
-            `ApiResponse({ status: 200, type: ${cleanDto}, isArray: ${isArray} })`,
+            `ApiResponse({ status: 200, type: ${dtoReference}, isArray: ${isArray} })`,
           );
         } else {
           decoratorArgs.push(
@@ -113,8 +116,9 @@ export class DecoratorGenerator implements IGenerator {
         );
         if (bodyDto) {
           this.addDtoImport(sourceFile, bodyDto);
+          const bodyDtoReference = this.getDtoReference(bodyDto);
           swaggerImports.add("ApiBody");
-          decoratorArgs.push(`ApiBody({ type: ${bodyDto} })`);
+          decoratorArgs.push(`ApiBody({ type: ${bodyDtoReference} })`);
         }
 
         // 5. ApiQuery / ApiParam
@@ -167,7 +171,37 @@ export class DecoratorGenerator implements IGenerator {
   }
 
   /**
+   * Reserved names that conflict with NestJS decorators
+   */
+  private readonly NESTJS_RESERVED_NAMES = [
+    "ApiResponse",
+    "ApiOperation",
+    "ApiBody",
+    "ApiParam",
+    "ApiQuery",
+    "ApiHeader",
+    "ApiTags",
+    "ApiSecurity",
+    "ApiBearerAuth",
+    "ApiOAuth2",
+    "ApiBasicAuth",
+    "ApiCookieAuth",
+  ];
+
+  /**
+   * Get the reference name for a DTO, using alias if it conflicts with NestJS decorators
+   * @param dtoName - The DTO class name
+   * @returns The name to use in generated code (either original or aliased)
+   */
+  private getDtoReference(dtoName: string): string {
+    return this.NESTJS_RESERVED_NAMES.includes(dtoName)
+      ? `${dtoName}Dto`
+      : dtoName;
+  }
+
+  /**
    * Adds a DTO import to the source file if not already present.
+   * Handles naming conflicts with NestJS decorators by using aliases.
    *
    * @param sourceFile - The ts-morph source file
    * @param dtoName - The DTO class name to import
@@ -183,10 +217,18 @@ export class DecoratorGenerator implements IGenerator {
     );
 
     if (!existingImport) {
-      sourceFile.addImportDeclaration({
-        namedImports: [dtoName],
-        moduleSpecifier: importPath,
-      });
+      // Use alias if DTO name conflicts with NestJS decorator
+      if (this.NESTJS_RESERVED_NAMES.includes(dtoName)) {
+        sourceFile.addImportDeclaration({
+          namedImports: [{ name: dtoName, alias: `${dtoName}Dto` }],
+          moduleSpecifier: importPath,
+        });
+      } else {
+        sourceFile.addImportDeclaration({
+          namedImports: [dtoName],
+          moduleSpecifier: importPath,
+        });
+      }
     }
   }
 }
