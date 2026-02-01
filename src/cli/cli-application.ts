@@ -274,17 +274,17 @@ export class CliApplication {
       if (args.verbose) {
         displayInfoMessage("Generating DTOs...");
       }
-      dtoGen.generate(document, project, args.output);
+      dtoGen.generate(document, project, args.output, structureConfig);
 
       if (args.verbose) {
         displayInfoMessage("Generating endpoint decorators...");
       }
-      decoratorGen.generate(document, project, args.output);
+      decoratorGen.generate(document, project, args.output, structureConfig);
 
       if (args.verbose) {
         displayInfoMessage("Generating controllers...");
       }
-      controllerGen.generate(document, project, args.output);
+      controllerGen.generate(document, project, args.output, structureConfig);
 
       // Format and save files
       if (args.verbose) {
