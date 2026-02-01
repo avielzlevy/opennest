@@ -2,20 +2,20 @@ import { Controller, Delete, Get, Inject, Param, Post, Put, Query } from "@nestj
 import { ApiTags } from "@nestjs/swagger";
 import { CreateUserEndpoint, CreateUsersWithListInputEndpoint, DeleteUserEndpoint, GetUserByNameEndpoint, LoginUserEndpoint, LogoutUserEndpoint, UpdateUserEndpoint } from "../decorators/user.decorator";
 
-export interface IuserService {
-  createUser(...args: any[]): Promise<any>;
-  createUsersWithListInput(...args: any[]): Promise<any>;
-  loginUser(...args: any[]): Promise<any>;
-  logoutUser(...args: any[]): Promise<any>;
-  getUserByName(...args: any[]): Promise<any>;
-  updateUser(...args: any[]): Promise<any>;
-  deleteUser(...args: any[]): Promise<any>;
+export interface IUserService {
+  createUser(data?: unknown): Promise<any>;
+  createUsersWithListInput(data?: unknown): Promise<any>;
+  loginUser(username: string, password: string): Promise<any>;
+  logoutUser(data?: unknown): Promise<any>;
+  getUserByName(username: string): Promise<any>;
+  updateUser(username: string): Promise<any>;
+  deleteUser(username: string): Promise<any>;
 }
 
 @ApiTags('user')
 @Controller('api/user')
-export class userController {
-  constructor(@Inject('IuserService') private readonly service: IuserService) {
+export class UserController {
+  constructor(@Inject('IUserService') private readonly service: IUserService) {
   }
 
   @Post('')

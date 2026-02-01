@@ -65,7 +65,7 @@ npx opennest --help
 opennest ./petstore.openapi.json --output ./generated
 
 # From remote URL
-opennest https://petstore.swagger.io/v2/swagger.json --output ./generated
+opennest https://petstore3.swagger.io/api/v3/openapi.json --output ./generated
 ```
 
 ### With Validation Flags

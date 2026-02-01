@@ -2,21 +2,21 @@ import { Controller, Delete, Get, Headers, Inject, Param, Post, Put, Query } fro
 import { ApiTags } from "@nestjs/swagger";
 import { AddPetEndpoint, DeletePetEndpoint, FindPetsByStatusEndpoint, FindPetsByTagsEndpoint, GetPetByIdEndpoint, UpdatePetEndpoint, UpdatePetWithFormEndpoint, UploadFileEndpoint } from "../decorators/pet.decorator";
 
-export interface IpetService {
-  addPet(...args: any[]): Promise<any>;
-  updatePet(...args: any[]): Promise<any>;
-  findPetsByStatus(...args: any[]): Promise<any>;
-  findPetsByTags(...args: any[]): Promise<any>;
-  getPetById(...args: any[]): Promise<any>;
-  updatePetWithForm(...args: any[]): Promise<any>;
-  deletePet(...args: any[]): Promise<any>;
-  uploadFile(...args: any[]): Promise<any>;
+export interface IPetService {
+  addPet(data?: unknown): Promise<any>;
+  updatePet(data?: unknown): Promise<any>;
+  findPetsByStatus(status: string): Promise<any>;
+  findPetsByTags(tags: string): Promise<any>;
+  getPetById(petId: number): Promise<any>;
+  updatePetWithForm(petId: number, name: string, status: string): Promise<any>;
+  deletePet(apiKey: string, petId: number): Promise<any>;
+  uploadFile(petId: number, additionalMetadata: string): Promise<any>;
 }
 
 @ApiTags('pet')
 @Controller('api/pet')
-export class petController {
-  constructor(@Inject('IpetService') private readonly service: IpetService) {
+export class PetController {
+  constructor(@Inject('IPetService') private readonly service: IPetService) {
   }
 
   @Post('')

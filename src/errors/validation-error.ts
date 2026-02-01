@@ -64,13 +64,12 @@ export class NameConflictError extends ValidationError {
     suggestion?: string,
   ) {
     const message = `Schema name "${name}" conflicts with ${conflictType}`;
-    const details = `Conflicts with: ${conflictWith.join(', ')}`;
     super(
       message,
       `components.schemas.${name}`,
       suggestion || `Rename the schema to avoid conflicts`,
+      { conflictType, conflictWith },
     );
-    this.details = { conflictType, conflictWith };
     Object.setPrototypeOf(this, NameConflictError.prototype);
   }
 }

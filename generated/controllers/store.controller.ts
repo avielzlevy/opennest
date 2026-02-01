@@ -2,17 +2,17 @@ import { Controller, Delete, Get, Inject, Param, Post } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
 import { DeleteOrderEndpoint, GetInventoryEndpoint, GetOrderByIdEndpoint, PlaceOrderEndpoint } from "../decorators/store.decorator";
 
-export interface IstoreService {
-  getInventory(...args: any[]): Promise<any>;
-  placeOrder(...args: any[]): Promise<any>;
-  getOrderById(...args: any[]): Promise<any>;
-  deleteOrder(...args: any[]): Promise<any>;
+export interface IStoreService {
+  getInventory(data?: unknown): Promise<any>;
+  placeOrder(data?: unknown): Promise<any>;
+  getOrderById(orderId: number): Promise<any>;
+  deleteOrder(orderId: number): Promise<any>;
 }
 
 @ApiTags('store')
 @Controller('api/store')
-export class storeController {
-  constructor(@Inject('IstoreService') private readonly service: IstoreService) {
+export class StoreController {
+  constructor(@Inject('IStoreService') private readonly service: IStoreService) {
   }
 
   @Get('inventory')
