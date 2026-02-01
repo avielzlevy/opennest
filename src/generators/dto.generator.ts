@@ -8,7 +8,7 @@ import {
   VariableDeclarationKind,
 } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
-import { TypeMapper } from "../../utils/type-mapper";
+import { TypeMapper } from "../utils/type-mapper";
 import { isReferenceObject, isSchemaObject } from "../utils/type-guards";
 import { toEnumKey, normalizeSchemaName } from "../utils/formatting-helpers";
 

@@ -18,7 +18,7 @@ import {
   displayWarningMessage,
   displayInfoMessage,
 } from "./error-handler";
-import { TypeMapper } from "../../utils/type-mapper";
+import { TypeMapper } from "../utils/type-mapper";
 import { DtoGenerator } from "../generators/dto.generator";
 import { ControllerGenerator } from "../generators/controller.generator";
 import { CommonGenerator } from "../generators/common.generator";

@@ -1,6 +1,6 @@
 import { Project } from "ts-morph";
 import { DtoGenerator } from "../src/generators/dto.generator"; // Adjust path
-import { TypeMapper } from "../utils/type-mapper";
+import { TypeMapper } from "../src/utils/type-mapper";
 import { OpenAPIV3 } from "openapi-types";
 
 describe("DtoGenerator Integration", () => {
