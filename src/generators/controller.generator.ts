@@ -25,6 +25,7 @@ import {
 } from "../utils/schema-helpers";
 import { capitalize, buildDtoImportPath } from "../utils/formatting-helpers";
 import { isParameterObject } from "../utils/type-guards";
+import { OutputStructureConfig, resolveOutputPath, extractResourceNameFromTag } from "../utils/output-structure-manager";
 
 export class ControllerGenerator implements IGenerator {
   constructor() {}
@@ -33,6 +34,7 @@ export class ControllerGenerator implements IGenerator {
     document: OpenAPIV3.Document,
     project: Project,
     outputPath: string = "./generated",
+    config?: OutputStructureConfig,
   ): void {
     if (!document.paths) return;
 
@@ -43,8 +45,16 @@ export class ControllerGenerator implements IGenerator {
       const className = buildControllerClassName(resourceName);
       const serviceInterfaceName = buildServiceInterfaceName(resourceName);
 
+      // Resolve output path based on structure configuration
+      const controllerPath = resolveOutputPath(
+        outputPath || 'generated',
+        'controllers',
+        extractResourceNameFromTag(tagName),
+        config || { structure: 'type-based' }
+      );
+
       const sourceFile = project.createSourceFile(
-        `${outputPath}/controllers/${resourceName.toLowerCase()}.controller.ts`,
+        controllerPath,
         "",
         { overwrite: true },
       );
