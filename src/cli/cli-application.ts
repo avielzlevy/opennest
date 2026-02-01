@@ -242,10 +242,13 @@ export class CliApplication {
         skipAddingFilesFromTsConfig: true,
       });
 
+      // Determine recovery strategy for generators
+      const recoveryStrategy = args.lenient ? 'skip' : (args.ignoreWarnings ? 'warn' : 'warn');
+
       // Instantiate generators
       const typeMapper = new TypeMapper();
       const commonGen = new CommonGenerator();
-      const dtoGen = new DtoGenerator(typeMapper);
+      const dtoGen = new DtoGenerator(typeMapper, recoveryStrategy as any);
       const decoratorGen = new DecoratorGenerator();
       const controllerGen = new ControllerGenerator();
 

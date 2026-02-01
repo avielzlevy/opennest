@@ -11,9 +11,18 @@ import { IGenerator } from "../interfaces/core";
 import { TypeMapper } from "../utils/type-mapper";
 import { isReferenceObject, isSchemaObject } from "../utils/type-guards";
 import { toEnumKey, normalizeSchemaName } from "../utils/formatting-helpers";
+import { displayWarningMessage } from "../cli/error-handler";
+
+/**
+ * Error recovery strategy for generator
+ */
+export type GeneratorRecoveryStrategy = 'skip' | 'fail-fast' | 'warn';
 
 export class DtoGenerator implements IGenerator {
-  constructor(private readonly typeMapper: TypeMapper) {}
+  constructor(
+    private readonly typeMapper: TypeMapper,
+    private readonly recoveryStrategy: GeneratorRecoveryStrategy = 'warn',
+  ) {}
 
   public generate(
     document: OpenAPIV3.Document,
@@ -27,29 +36,65 @@ export class DtoGenerator implements IGenerator {
       OpenAPIV3.SchemaObject | OpenAPIV3.ReferenceObject
     >;
 
+    const errors: Array<{ schema: string; error: string }> = [];
+    const warnings: string[] = [];
+
     for (const [name, schema] of Object.entries(schemas)) {
-      // Skip references - only process actual schema objects
-      if (isReferenceObject(schema)) continue;
-      if (!isSchemaObject(schema)) continue;
+      try {
+        // Skip references - only process actual schema objects
+        if (isReferenceObject(schema)) continue;
+        if (!isSchemaObject(schema)) {
+          const msg = `Schema "${name}" is not a valid SchemaObject`;
+          if (this.recoveryStrategy === 'fail-fast') {
+            throw new Error(msg);
+          }
+          errors.push({ schema: name, error: msg });
+          warnings.push(`Skipped invalid schema: ${name}`);
+          continue;
+        }
 
-      // Normalize class name to avoid reserved word collisions
-      const className = normalizeSchemaName(name);
+        // Validate schema has properties or is valid without them
+        if (!schema.properties && schema.type === 'object') {
+          const msg = `Schema "${name}" is object type but has no properties`;
+          warnings.push(msg);
+        }
 
-      const sourceFile = project.createSourceFile(
-        `${outputPath}/dtos/${className}.dto.ts`,
-        "",
-        { overwrite: true },
-      );
+        // Normalize class name to avoid reserved word collisions
+        const className = normalizeSchemaName(name);
 
-      const classDecl = sourceFile.addClass({
-        name: className,
-        isExported: true,
-      });
+        const sourceFile = project.createSourceFile(
+          `${outputPath}/dtos/${className}.dto.ts`,
+          "",
+          { overwrite: true },
+        );
 
-      this.processProperties(classDecl, schema, className);
+        const classDecl = sourceFile.addClass({
+          name: className,
+          isExported: true,
+        });
 
-      sourceFile.fixMissingImports();
-      sourceFile.organizeImports();
+        this.processProperties(classDecl, schema, className);
+
+        sourceFile.fixMissingImports();
+        sourceFile.organizeImports();
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        const msg = `Failed to generate DTO for schema "${name}": ${errorMsg}`;
+
+        if (this.recoveryStrategy === 'fail-fast') {
+          throw error;
+        }
+
+        errors.push({ schema: name, error: errorMsg });
+        warnings.push(`Skipped ${name}: ${errorMsg}`);
+      }
+    }
+
+    // Report warnings if any
+    if (warnings.length > 0 && this.recoveryStrategy === 'warn') {
+      for (const warning of warnings) {
+        displayWarningMessage(`DTO Generator: ${warning}`);
+      }
     }
   }
 
