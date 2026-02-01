@@ -117,6 +117,126 @@ if (isSchemaObject(schema)) {
 const props = (schema as any).properties;
 ```
 
+## Understanding Output Structures
+
+OpenNest supports multiple output organization patterns (type-based, domain-based). When contributing new features or generators, you need to ensure they work correctly with all structure patterns.
+
+### How Structures Work
+
+1. **Generation Logic is Identical**: The code generation logic (DTO creation, controller scaffolding, etc.) is the same regardless of structure
+2. **Only Paths Differ**: The structure only affects where files are written (e.g., `dtos/User.dto.ts` vs `user/dtos/User.dto.ts`)
+3. **OutputStructureManager**: A utility handles all path resolution based on the selected structure
+
+### File Path Resolution
+
+All generators use `OutputStructureManager` to determine file paths:
+
+```typescript
+import { getOutputPath } from '../utils/output-structure-manager';
+
+// In your generator:
+const filePath = getOutputPath(
+  outputDir,        // Base output directory
+  structure,        // 'type-based' | 'domain-based'
+  'dto',           // File type: 'dto' | 'controller' | 'decorator'
+  'User',          // Schema/resource name
+  tag              // Optional: tag/domain for domain-based structure
+);
+```
+
+**Example outputs:**
+- Type-based: `generated/dtos/User.dto.ts`
+- Domain-based: `generated/user/dtos/User.dto.ts` (uses tag)
+
+### Adding Structure Support to New Features
+
+When implementing a new generator or feature:
+
+1. **Use OutputStructureManager**: Never hardcode paths like `${outputDir}/dtos/${name}.dto.ts`
+   ```typescript
+   // Bad - hardcoded path
+   const path = `${outputDir}/dtos/${name}.dto.ts`;
+
+   // Good - structure-aware
+   const path = getOutputPath(outputDir, structure, 'dto', name, tag);
+   ```
+
+2. **Pass Structure Through**: Ensure the `structure` parameter flows from CLI → main → generator
+   ```typescript
+   // Generator interface
+   interface IGenerator {
+     generate(spec: OpenAPIV3.Document, outputDir: string, structure: OutputStructure): void;
+   }
+   ```
+
+3. **Handle Tags/Domains**: For domain-based structure, extract and use tags from operations
+   ```typescript
+   const tag = operation.tags?.[0] || 'default';
+   const path = getOutputPath(outputDir, structure, 'controller', controllerName, tag);
+   ```
+
+4. **Decorators are Special**: The `endpoint.decorator.ts` file always goes in `decorators/` at the root
+   ```typescript
+   // Decorators don't use tags - always at root
+   const path = getOutputPath(outputDir, structure, 'decorator', 'endpoint');
+   ```
+
+### Testing Both Structures
+
+Always test your changes with both structure patterns:
+
+```bash
+# Test type-based (default)
+npm test
+
+# Test domain-based
+npm test -- --grep "domain-based"
+
+# Integration test with both structures
+npm run build
+./dist/cli.js test-api.yaml --structure type-based
+./dist/cli.js test-api.yaml --structure domain-based
+```
+
+**Writing Tests:**
+```typescript
+describe('MyGenerator', () => {
+  ['type-based', 'domain-based'].forEach(structure => {
+    it(`should generate correctly with ${structure} structure`, () => {
+      const result = generator.generate(spec, outputDir, structure);
+
+      if (structure === 'type-based') {
+        expect(result.path).toBe('generated/dtos/User.dto.ts');
+      } else {
+        expect(result.path).toBe('generated/user/dtos/User.dto.ts');
+      }
+    });
+  });
+});
+```
+
+### Common Patterns
+
+**Extract tag for domain-based:**
+```typescript
+function getPrimaryTag(operation: OperationObject): string {
+  return operation.tags?.[0] || 'default';
+}
+```
+
+**Get output path with tag handling:**
+```typescript
+const tag = structure === 'domain-based' ? getPrimaryTag(operation) : undefined;
+const filePath = getOutputPath(outputDir, structure, 'controller', name, tag);
+```
+
+**Import path adjustments:**
+```typescript
+// Import paths are relative and auto-calculated by OutputStructureManager
+const dtoImportPath = getImportPath(controllerPath, dtoPath);
+// Result: '../dtos/User.dto' (type-based) or './dtos/User.dto' (domain-based)
+```
+
 ## Adding Features
 
 ### 1. Check the Roadmap
