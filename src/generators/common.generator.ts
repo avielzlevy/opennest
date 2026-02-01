@@ -1,9 +1,10 @@
 import { OpenAPIV3 } from 'openapi-types';
 import { Project, VariableDeclarationKind } from 'ts-morph';
 import { IGenerator } from '../interfaces/core';
+import { OutputStructureConfig } from '../utils/output-structure-manager';
 
 export class CommonGenerator implements IGenerator {
-  public generate(_document: OpenAPIV3.Document | undefined, project: Project, outputPath: string = './generated'): void {
+  public generate(_document: OpenAPIV3.Document | undefined, project: Project, outputPath: string = './generated', config?: OutputStructureConfig): void {
 
     // 1. Generate Common Error DTO
     const errorDtoFile = project.createSourceFile(`${outputPath}/common/dto/error.dto.ts`, '', { overwrite: true });
