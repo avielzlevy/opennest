@@ -1,5 +1,66 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based DTO with enum: domain-based-order-enum-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsIn, IsNotEmpty } from "class-validator";
+
+export const ORDER_STATUS = {
+                                PENDING: 'pending',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled'
+                            } as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+
+export class Order {
+    @IsIn(Object.values(ORDER_STATUS))
+    @ApiProperty({"description":"Order status","enum":["pending","completed","cancelled"],"enumName":"OrderStatus"})
+    @IsNotEmpty()
+    public status!: OrderStatus;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based DTO with reference: domain-based-article-reference-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
+import { Tag } from "../dtos/Tag.dto";
+
+export class Article {
+    @IsString()
+    @ApiProperty()
+    @IsNotEmpty()
+    public title!: string;
+    @ValidateNested()
+    @Type(() => Tag)
+    @IsOptional()
+    public tag?: Tag | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based simple DTO: domain-based-product-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+
+export class Product {
+    @IsString()
+    @ApiProperty({"description":"Unique identifier"})
+    @IsNotEmpty()
+    public id!: string;
+    @IsString()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public name?: string | undefined;
+    @IsNumber()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public price?: number | undefined;
+}
+"
+`;
+
 exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with array: array-dto 1`] = `
 "import { IsArray, IsOptional } from "class-validator";
 

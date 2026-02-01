@@ -20,6 +20,37 @@ export function UpdateUserEndpoint() {
 "
 `;
 
+exports[`DecoratorGenerator DecoratorGenerator - Domain-based Structure should match snapshot for domain-based decorator with auth: domain-based-users-auth-decorator 1`] = `
+"import { applyDecorators } from "@nestjs/common";
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { JwtDecorator } from "../common/decorators/auth/jwt.decorator";
+import { User } from "../dtos/User.dto";
+
+export function GetCurrentUserEndpoint() {
+    return applyDecorators(
+      ApiOperation({"summary":"Get current user","description":""}),
+      JwtDecorator(),
+      ApiResponse({ status: 200, type: User, isArray: false })
+    );
+}
+"
+`;
+
+exports[`DecoratorGenerator DecoratorGenerator - Domain-based Structure should match snapshot for domain-based simple decorator: domain-based-orders-decorator 1`] = `
+"import { applyDecorators } from "@nestjs/common";
+import { ApiOperation, ApiQuery, ApiResponse } from "@nestjs/swagger";
+import { Order } from "../dtos/Order.dto";
+
+export function ListOrdersEndpoint() {
+    return applyDecorators(
+      ApiOperation({"summary":"List all orders","description":"Retrieve a paginated list of orders"}),
+      ApiResponse({ status: 200, type: Order, isArray: true }),
+      ApiQuery({ name: 'page', required: false, type: Number })
+    );
+}
+"
+`;
+
 exports[`DecoratorGenerator Real-World Fixtures should handle Petstore API fixture: petstore-decorators 1`] = `
 "import { applyDecorators } from "@nestjs/common";
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse } from "@nestjs/swagger";
