@@ -155,8 +155,31 @@ Examples:
   $ opennest ./specs/api.yaml --structure type-based
 
 Output Structure Patterns:
-  type-based (default)  - Organize by file type: dtos/, controllers/, decorators/
-  domain-based          - Organize by domain: pet/dtos/, pet/controllers/, etc.
+  type-based (default)  - Organize by file type:
+                          generated/
+                          ├── dtos/
+                          │   ├── User.dto.ts
+                          │   └── Product.dto.ts
+                          ├── controllers/
+                          │   ├── user.controller.ts
+                          │   └── product.controller.ts
+                          └── decorators/
+                              └── endpoint.decorator.ts
+
+  domain-based          - Organize by domain/resource:
+                          generated/
+                          ├── user/
+                          │   ├── dtos/
+                          │   │   └── User.dto.ts
+                          │   └── controllers/
+                          │       └── user.controller.ts
+                          ├── product/
+                          │   ├── dtos/
+                          │   │   └── Product.dto.ts
+                          │   └── controllers/
+                          │       └── product.controller.ts
+                          └── decorators/
+                              └── endpoint.decorator.ts
 
 Validation Modes:
   --strict (default)    - Fail on any validation error or warning
