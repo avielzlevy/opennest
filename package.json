@@ -1,11 +1,42 @@
 {
   "name": "opennest",
   "version": "1.0.0",
-  "description": "",
+  "description": "Generate NestJS skeleton code (DTOs, Controllers, Decorators) from OpenAPI specifications. CLI tool for API-first development.",
+  "main": "dist/cli.js",
+  "bin": {
+    "opennest": "dist/cli.js"
+  },
   "scripts": {
     "start": "ts-node src/cli.ts",
     "dev": "ts-node src/cli.ts",
-    "test": "jest"
+    "test": "jest",
+    "build": "tsc",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "keywords": [
+    "nestjs",
+    "openapi",
+    "swagger",
+    "code-generation",
+    "cli",
+    "typescript",
+    "dto",
+    "controller",
+    "api-first",
+    "skeleton"
+  ],
+  "author": "OpenNest Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/opennest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anthropics/opennest/issues"
+  },
+  "homepage": "https://github.com/anthropics/opennest#readme",
+  "engines": {
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "@apidevtools/swagger-parser": "^10.0.0",
