@@ -106,7 +106,7 @@ export class CliApplication {
     }
 
     // Determine files to generate
-    const filesToGenerate = getFilesToGenerate(spec);
+    const filesToGenerate = getFilesToGenerate(spec, args.structure);
     displayStepMessage(
       `Ready to generate ${filesToGenerate.length} file(s) to: ${args.output}`,
     );

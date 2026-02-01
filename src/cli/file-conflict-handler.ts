@@ -117,9 +117,13 @@ export function generateConflictPrompt(
  * This is a placeholder that returns common generation patterns
  * In future phases, this will be determined by actual generator logic
  * @param spec - Parsed OpenAPI specification
+ * @param structure - Output structure pattern (type-based or domain-based)
  * @returns Array of file paths that would be generated
  */
-export function getFilesToGenerate(spec: Record<string, unknown>): string[] {
+export function getFilesToGenerate(
+  spec: Record<string, unknown>,
+  structure: 'type-based' | 'domain-based' = 'type-based'
+): string[] {
   // Placeholder implementation
   // In real usage, this would analyze the spec and determine
   // which files need to be generated based on available generators
@@ -144,4 +148,38 @@ export function getFilesToGenerate(spec: Record<string, unknown>): string[] {
   }
 
   return files;
+}
+
+/**
+ * Gets glob patterns for files to check for conflicts based on output structure
+ * @param structure - Output structure pattern (type-based or domain-based)
+ * @returns Array of glob patterns for file conflict checking
+ *
+ * @example
+ * // Type-based structure
+ * getFilePatterns('type-based')
+ * // Returns: ['dtos/*.dto.ts', 'controllers/*.controller.ts', 'decorators/*.decorator.ts', 'common/**']
+ *
+ * // Domain-based structure
+ * getFilePatterns('domain-based')
+ * // Returns: ['*\/dtos/*.dto.ts', '*\/controllers/*.controller.ts', '*\/decorators/*.decorator.ts', 'common/**']
+ */
+export function getFilePatterns(structure: 'type-based' | 'domain-based' = 'type-based'): string[] {
+  if (structure === 'domain-based') {
+    // Domain-based: files organized by domain/resource
+    return [
+      '*/dtos/*.dto.ts',
+      '*/controllers/*.controller.ts',
+      '*/decorators/*.decorator.ts',
+      'common/**',
+    ];
+  } else {
+    // Type-based: files organized by type
+    return [
+      'dtos/*.dto.ts',
+      'controllers/*.controller.ts',
+      'decorators/*.decorator.ts',
+      'common/**',
+    ];
+  }
 }
