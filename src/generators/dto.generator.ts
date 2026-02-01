@@ -18,6 +18,7 @@ import {
   resolveNestJsConflict,
   hasNestJsConflict,
 } from "../validation/identifier-validator";
+import { OutputStructureConfig, resolveOutputPath, extractResourceNameFromTag } from "../utils/output-structure-manager";
 
 /**
  * Error recovery strategy for generator
@@ -34,6 +35,7 @@ export class DtoGenerator implements IGenerator {
     document: OpenAPIV3.Document,
     project: Project,
     outputPath: string = "./generated",
+    config?: OutputStructureConfig,
   ): void {
     if (!document.components?.schemas) return;
 
@@ -86,8 +88,20 @@ export class DtoGenerator implements IGenerator {
           warnings.push(`Schema name "${original}" is not a valid identifier, sanitized to "${className}"`);
         }
 
+        // Determine resource name for domain-based structure
+        // For DTOs without explicit tags, use 'types' as the resource name
+        const resourceName = extractResourceNameFromTag(className);
+
+        // Resolve output path based on structure configuration
+        const dtoPath = resolveOutputPath(
+          outputPath || 'generated',
+          'dtos',
+          resourceName,
+          config || { structure: 'type-based' }
+        );
+
         const sourceFile = project.createSourceFile(
-          `${outputPath}/dtos/${className}.dto.ts`,
+          dtoPath,
           "",
           { overwrite: true },
         );
