@@ -26,6 +26,7 @@ import { DecoratorGenerator } from "../generators/decorator.generator";
 import { SpecValidator } from "../validation/spec-validator";
 import { formatValidationReport } from "../validation/error-formatter";
 import { ValidationError } from "../errors/validation-error";
+import { OutputStructureConfig } from "../utils/output-structure-manager";
 
 /**
  * CLI Arguments passed to the application
@@ -33,6 +34,7 @@ import { ValidationError } from "../errors/validation-error";
 export interface CliApplicationArgs {
   spec: string;
   output: string;
+  structure: 'type-based' | 'domain-based';
   onlyDto: boolean;
   onlyController: boolean;
   onlyDecorator: boolean;
@@ -233,6 +235,15 @@ export class CliApplication {
   ): Promise<void> {
     try {
       displayStepMessage("Generating code...");
+
+      // Create structure configuration
+      const structureConfig: OutputStructureConfig = {
+        structure: args.structure as 'type-based' | 'domain-based',
+      };
+
+      if (args.verbose) {
+        displayInfoMessage(`Using ${args.structure} output structure`);
+      }
 
       // Initialize AST Project
       const project = new Project({
