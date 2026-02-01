@@ -920,4 +920,375 @@ describe("DecoratorGenerator", () => {
       expect(sourceFile?.getFullText()).toMatchSnapshot("complete-decorator-example");
     });
   });
+
+  describe("DecoratorGenerator - Domain-based Structure", () => {
+    const domainConfig = { structure: "domain-based" as const };
+
+    it("should generate decorator in domain-specific directory", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            get: {
+              operationId: "listPets",
+              summary: "List all pets",
+              tags: ["pets"],
+              responses: {
+                "200": { description: "Success" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile("generated/pets/decorators/pets.decorator.ts");
+      expect(sourceFile).toBeDefined();
+
+      const functionDecl = sourceFile?.getFunction("ListPetsEndpoint");
+      expect(functionDecl).toBeDefined();
+      expect(functionDecl?.isExported()).toBe(true);
+    });
+
+    it("should separate different domains into different directories", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            get: {
+              operationId: "listPets",
+              tags: ["pets"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+          "/users": {
+            get: {
+              operationId: "listUsers",
+              tags: ["users"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+          "/stores": {
+            get: {
+              operationId: "listStores",
+              tags: ["stores"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const petsFile = project.getSourceFile(
+        "generated/pets/decorators/pets.decorator.ts"
+      );
+      const usersFile = project.getSourceFile(
+        "generated/users/decorators/users.decorator.ts"
+      );
+      const storesFile = project.getSourceFile(
+        "generated/stores/decorators/stores.decorator.ts"
+      );
+
+      expect(petsFile).toBeDefined();
+      expect(usersFile).toBeDefined();
+      expect(storesFile).toBeDefined();
+    });
+
+    it("should generate identical code to type-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/products": {
+            get: {
+              operationId: "listProducts",
+              summary: "List all products",
+              tags: ["products"],
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          },
+        },
+      };
+
+      // Generate with type-based structure
+      const typeProject = new Project({ useInMemoryFileSystem: true });
+      const typeGenerator = new DecoratorGenerator();
+      typeGenerator.generate(doc, typeProject, "generated");
+      const typeFile = typeProject.getSourceFile(
+        "generated/decorators/products.decorator.ts"
+      );
+      const typeCode = typeFile!.getFullText();
+
+      // Generate with domain-based structure
+      const domainProject = new Project({ useInMemoryFileSystem: true });
+      const domainGenerator = new DecoratorGenerator();
+      domainGenerator.generate(doc, domainProject, "generated", domainConfig);
+      const domainFile = domainProject.getSourceFile(
+        "generated/products/decorators/products.decorator.ts"
+      );
+      const domainCode = domainFile!.getFullText();
+
+      // Code should be identical
+      expect(typeCode).toBe(domainCode);
+    });
+
+    it("should handle parameters in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets/{petId}": {
+            get: {
+              operationId: "getPetById",
+              tags: ["pets"],
+              parameters: [
+                {
+                  name: "petId",
+                  in: "path",
+                  required: true,
+                  schema: { type: "integer" },
+                  description: "The pet ID",
+                },
+              ],
+              responses: {
+                "200": { description: "Success" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/decorators/pets.decorator.ts"
+      );
+      const functionDecl = sourceFile?.getFunction("GetPetByIdEndpoint");
+      const bodyText = functionDecl?.getBodyText() || "";
+
+      expect(bodyText).toContain("ApiParam");
+      expect(bodyText).toContain("name: 'petId'");
+      expect(bodyText).toContain("type: Number");
+    });
+
+    it("should handle query parameters in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            get: {
+              operationId: "listPets",
+              tags: ["pets"],
+              parameters: [
+                {
+                  name: "limit",
+                  in: "query",
+                  required: false,
+                  schema: { type: "integer" },
+                },
+                {
+                  name: "status",
+                  in: "query",
+                  required: true,
+                  schema: { type: "string" },
+                },
+              ],
+              responses: {
+                "200": { description: "Success" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/decorators/pets.decorator.ts"
+      );
+      const functionDecl = sourceFile?.getFunction("ListPetsEndpoint");
+      const bodyText = functionDecl?.getBodyText() || "";
+
+      expect(bodyText).toContain("ApiQuery");
+      expect(bodyText).toContain("name: 'limit'");
+      expect(bodyText).toContain("required: false");
+      expect(bodyText).toContain("name: 'status'");
+      expect(bodyText).toContain("required: true");
+    });
+
+    it("should handle request/response bodies in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            post: {
+              operationId: "createPet",
+              tags: ["pets"],
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/CreatePetDto" },
+                  },
+                },
+              },
+              responses: {
+                "201": {
+                  description: "Created",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Pet" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Pet: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+              },
+            },
+            CreatePetDto: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/decorators/pets.decorator.ts"
+      );
+      const functionDecl = sourceFile?.getFunction("CreatePetEndpoint");
+      const bodyText = functionDecl?.getBodyText() || "";
+
+      expect(bodyText).toContain("ApiBody");
+      expect(bodyText).toContain("type: CreatePetDto");
+      expect(bodyText).toContain("ApiResponse");
+    });
+
+    it("should match snapshot for domain-based simple decorator", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/orders": {
+            get: {
+              operationId: "listOrders",
+              summary: "List all orders",
+              description: "Retrieve a paginated list of orders",
+              tags: ["orders"],
+              parameters: [
+                {
+                  name: "page",
+                  in: "query",
+                  schema: { type: "integer" },
+                },
+              ],
+              responses: {
+                "200": {
+                  description: "Success",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Order" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Order: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                total: { type: "number" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/orders/decorators/orders.decorator.ts"
+      );
+      expect(sourceFile?.getFullText()).toMatchSnapshot("domain-based-orders-decorator");
+    });
+
+    it("should match snapshot for domain-based decorator with auth", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/users/me": {
+            get: {
+              operationId: "getCurrentUser",
+              summary: "Get current user",
+              tags: ["users"],
+              security: [{ BearerAuth: [] }],
+              responses: {
+                "200": {
+                  description: "Success",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/User" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            User: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                email: { type: "string" },
+              },
+            },
+          },
+          securitySchemes: {
+            BearerAuth: {
+              type: "http",
+              scheme: "bearer",
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/users/decorators/users.decorator.ts"
+      );
+      expect(sourceFile?.getFullText()).toMatchSnapshot("domain-based-users-auth-decorator");
+    });
+  });
 });
