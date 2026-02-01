@@ -12,6 +12,7 @@ export type ValidationRecoveryStrategy = 'strict' | 'lenient' | 'ignore-warnings
 export interface CliArgs {
   spec: string;
   output: string;
+  structure: 'type-based' | 'domain-based';
   onlyDto: boolean;
   onlyController: boolean;
   onlyDecorator: boolean;
@@ -79,9 +80,18 @@ export class ArgumentParser {
       );
     }
 
+    // Validate structure flag value
+    const structure = options.structure || 'type-based';
+    if (structure !== 'type-based' && structure !== 'domain-based') {
+      throw new InvalidArgumentsError(
+        `Invalid --structure value: "${structure}". Must be one of: type-based, domain-based`
+      );
+    }
+
     return {
       spec,
       output: options.output || './generated',
+      structure: structure as 'type-based' | 'domain-based',
       onlyDto: !!options.onlyDto,
       onlyController: !!options.onlyController,
       onlyDecorator: !!options.onlyDecorator,
@@ -105,6 +115,7 @@ export class ArgumentParser {
       .version('1.0.0', '-v, --version', 'Display version information')
       .argument('<spec>', 'Path to OpenAPI spec file (YAML/JSON) or URL')
       .option('-o, --output <directory>', 'Output directory for generated files (default: ./generated)', './generated')
+      .option('--structure <type>', 'Output structure pattern: type-based | domain-based (default: type-based)', 'type-based')
       .option('--only-dto', 'Generate only DTO files')
       .option('--only-controller', 'Generate only controller files')
       .option('--only-decorator', 'Generate only decorator files')
@@ -136,6 +147,16 @@ Examples:
 
   # Generate with lenient mode (skip invalid schemas)
   $ opennest ./specs/api.yaml --lenient
+
+  # Use domain-based output structure
+  $ opennest ./specs/api.yaml --structure domain-based
+
+  # Use type-based output structure (default)
+  $ opennest ./specs/api.yaml --structure type-based
+
+Output Structure Patterns:
+  type-based (default)  - Organize by file type: dtos/, controllers/, decorators/
+  domain-based          - Organize by domain: pet/dtos/, pet/controllers/, etc.
 
 Validation Modes:
   --strict (default)    - Fail on any validation error or warning
