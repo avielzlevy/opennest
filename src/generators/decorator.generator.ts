@@ -28,10 +28,11 @@ export class DecoratorGenerator implements IGenerator {
       const fileName = resourceName.toLowerCase();
 
       // Resolve output path based on structure configuration
+      // Use fileName (lowercase) for backward compatibility in type-based mode
       const decoratorPath = resolveOutputPath(
         outputPath || 'generated',
         'decorators',
-        extractResourceNameFromTag(tagName),
+        fileName,
         config || { structure: 'type-based' }
       );
 

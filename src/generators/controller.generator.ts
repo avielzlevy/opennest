@@ -46,10 +46,11 @@ export class ControllerGenerator implements IGenerator {
       const serviceInterfaceName = buildServiceInterfaceName(resourceName);
 
       // Resolve output path based on structure configuration
+      // Use lowercase resourceName for backward compatibility in type-based mode
       const controllerPath = resolveOutputPath(
         outputPath || 'generated',
         'controllers',
-        extractResourceNameFromTag(tagName),
+        resourceName.toLowerCase(),
         config || { structure: 'type-based' }
       );
 

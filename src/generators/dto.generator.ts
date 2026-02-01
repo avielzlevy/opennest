@@ -88,15 +88,12 @@ export class DtoGenerator implements IGenerator {
           warnings.push(`Schema name "${original}" is not a valid identifier, sanitized to "${className}"`);
         }
 
-        // Determine resource name for domain-based structure
-        // For DTOs without explicit tags, use 'types' as the resource name
-        const resourceName = extractResourceNameFromTag(className);
-
         // Resolve output path based on structure configuration
+        // Use className as resource name for path generation
         const dtoPath = resolveOutputPath(
           outputPath || 'generated',
           'dtos',
-          resourceName,
+          className,
           config || { structure: 'type-based' }
         );
 
