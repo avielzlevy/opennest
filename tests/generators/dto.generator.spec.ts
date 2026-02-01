@@ -624,9 +624,9 @@ describe("DtoGenerator Unit Tests", () => {
 
       generator.generate(doc, project, "./generated");
 
-      // Should create file with normalized name
-      const sourceFile = project.getSourceFileOrThrow("./generated/dtos/Class.dto.ts");
-      const classDecl = sourceFile.getClassOrThrow("Class");
+      // Should create file with sanitized name
+      const sourceFile = project.getSourceFileOrThrow("./generated/dtos/Class_.dto.ts");
+      const classDecl = sourceFile.getClassOrThrow("Class_");
       expect(classDecl.isExported()).toBe(true);
     });
   });
@@ -926,6 +926,306 @@ describe("DtoGenerator Unit Tests", () => {
         "PostDto.dto.ts",
         "UserDto.dto.ts",
       ]);
+    });
+  });
+
+  describe("Domain-based Structure", () => {
+    const domainConfig = { structure: "domain-based" as const };
+
+    it("should generate DTO in domain-specific directory", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Pet: {
+              type: "object",
+              required: ["name"],
+              properties: {
+                name: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const sourceFile = project.getSourceFileOrThrow("./generated/Pet/dtos/Pet.dto.ts");
+      const classDecl = sourceFile.getClassOrThrow("Pet");
+      expect(classDecl).toBeDefined();
+    });
+
+    it("should separate different domains into different directories", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Pet: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+            User: {
+              type: "object",
+              properties: {
+                email: { type: "string" },
+              },
+            },
+            Store: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const petFile = project.getSourceFileOrThrow("./generated/Pet/dtos/Pet.dto.ts");
+      const userFile = project.getSourceFileOrThrow("./generated/User/dtos/User.dto.ts");
+      const storeFile = project.getSourceFileOrThrow("./generated/Store/dtos/Store.dto.ts");
+
+      expect(petFile).toBeDefined();
+      expect(userFile).toBeDefined();
+      expect(storeFile).toBeDefined();
+    });
+
+    it("should generate identical code to type-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            TestDto: {
+              type: "object",
+              required: ["id", "name"],
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+                active: { type: "boolean" },
+              },
+            },
+          },
+        },
+      };
+
+      // Generate with type-based structure
+      const typeProject = new Project({ useInMemoryFileSystem: true });
+      const typeGenerator = new DtoGenerator(new TypeMapper());
+      typeGenerator.generate(doc, typeProject, "./generated");
+      const typeFile = typeProject.getSourceFileOrThrow("./generated/dtos/TestDto.dto.ts");
+      const typeCode = typeFile.getFullText();
+
+      // Generate with domain-based structure
+      const domainProject = new Project({ useInMemoryFileSystem: true });
+      const domainGenerator = new DtoGenerator(new TypeMapper());
+      domainGenerator.generate(doc, domainProject, "./generated", domainConfig);
+      const domainFile = domainProject.getSourceFileOrThrow("./generated/TestDto/dtos/TestDto.dto.ts");
+      const domainCode = domainFile.getFullText();
+
+      // Code should be identical
+      expect(typeCode).toBe(domainCode);
+    });
+
+    it("should handle complex types in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            AddressDto: {
+              type: "object",
+              properties: {
+                street: { type: "string" },
+              },
+            },
+            PersonDto: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                address: { $ref: "#/components/schemas/AddressDto" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const personFile = project.getSourceFileOrThrow("./generated/PersonDto/dtos/PersonDto.dto.ts");
+      const classDecl = personFile.getClassOrThrow("PersonDto");
+      const addressProp = classDecl.getPropertyOrThrow("address");
+
+      // Verify decorators are present (type resolution may be 'any' in-memory)
+      expect(addressProp.getDecorator("ValidateNested")).toBeDefined();
+      expect(addressProp.getDecorator("Type")).toBeDefined();
+      expect(addressProp.getDecorator("IsOptional")).toBeDefined();
+    });
+
+    it("should handle enums in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Status: {
+              type: "object",
+              required: ["value"],
+              properties: {
+                value: {
+                  type: "string",
+                  enum: ["active", "inactive"],
+                },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const sourceFile = project.getSourceFileOrThrow("./generated/Status/dtos/Status.dto.ts");
+      const constVar = sourceFile.getVariableDeclaration("STATUS_VALUE");
+      expect(constVar).toBeDefined();
+      expect(constVar?.isExported()).toBe(true);
+    });
+
+    it("should handle arrays in domain-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Item: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+            Collection: {
+              type: "object",
+              properties: {
+                items: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Item" },
+                },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const collectionFile = project.getSourceFileOrThrow("./generated/Collection/dtos/Collection.dto.ts");
+      const classDecl = collectionFile.getClassOrThrow("Collection");
+      const itemsProp = classDecl.getPropertyOrThrow("items");
+
+      expect(itemsProp.getType().getText()).toContain("Item[]");
+      expect(itemsProp.getDecorator("IsArray")).toBeDefined();
+      expect(itemsProp.getDecorator("ValidateNested")).toBeDefined();
+    });
+
+    it("should match snapshot for domain-based simple DTO", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Product: {
+              type: "object",
+              required: ["id"],
+              properties: {
+                id: { type: "string", description: "Unique identifier" },
+                name: { type: "string" },
+                price: { type: "number" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const sourceFile = project.getSourceFileOrThrow("./generated/Product/dtos/Product.dto.ts");
+      const fullText = sourceFile.getFullText();
+
+      expect(fullText).toMatchSnapshot("domain-based-product-dto");
+    });
+
+    it("should match snapshot for domain-based DTO with enum", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Order: {
+              type: "object",
+              required: ["status"],
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["pending", "completed", "cancelled"],
+                  description: "Order status",
+                },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const sourceFile = project.getSourceFileOrThrow("./generated/Order/dtos/Order.dto.ts");
+      const fullText = sourceFile.getFullText();
+
+      expect(fullText).toMatchSnapshot("domain-based-order-enum-dto");
+    });
+
+    it("should match snapshot for domain-based DTO with reference", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test", version: "1.0.0" },
+        paths: {},
+        components: {
+          schemas: {
+            Tag: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+            Article: {
+              type: "object",
+              required: ["title"],
+              properties: {
+                title: { type: "string" },
+                tag: { $ref: "#/components/schemas/Tag" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "./generated", domainConfig);
+
+      const sourceFile = project.getSourceFileOrThrow("./generated/Article/dtos/Article.dto.ts");
+      const fullText = sourceFile.getFullText();
+
+      expect(fullText).toMatchSnapshot("domain-based-article-reference-dto");
     });
   });
 });
