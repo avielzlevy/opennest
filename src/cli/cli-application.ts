@@ -23,6 +23,9 @@ import { DtoGenerator } from "../generators/dto.generator";
 import { ControllerGenerator } from "../generators/controller.generator";
 import { CommonGenerator } from "../generators/common.generator";
 import { DecoratorGenerator } from "../generators/decorator.generator";
+import { SpecValidator } from "../validation/spec-validator";
+import { formatValidationReport } from "../validation/error-formatter";
+import { ValidationError } from "../errors/validation-error";
 
 /**
  * CLI Arguments passed to the application
@@ -35,6 +38,11 @@ export interface CliApplicationArgs {
   onlyDecorator: boolean;
   force: boolean;
   verbose: boolean;
+  strict?: boolean;
+  lenient?: boolean;
+  ignoreWarnings?: boolean;
+  validateOnly?: boolean;
+  validateVerbose?: boolean;
 }
 
 /**
@@ -59,6 +67,40 @@ export class CliApplication {
       displayInfoMessage(
         `Specification contains paths and schemas for code generation`,
       );
+    }
+
+    // Validate specification
+    displayStepMessage("Validating specification...");
+    const validator = new SpecValidator({ strict: args.strict ?? true });
+    const document = spec as unknown as OpenAPIV3.Document;
+    const validationResult = validator.validate(document);
+
+    // Display validation report
+    console.log(formatValidationReport(validationResult));
+
+    // Handle validation errors
+    if (!validationResult.valid) {
+      if (args.lenient) {
+        displayWarningMessage(
+          `Validation errors found. Continuing with lenient mode (invalid schemas will be skipped).`,
+        );
+      } else if (args.ignoreWarnings) {
+        displayWarningMessage(
+          `Validation warnings found. Ignoring warnings and continuing.`,
+        );
+      } else {
+        throw new ValidationError(
+          `Specification validation failed with ${validationResult.errors.length} error(s)`,
+          'See validation report above',
+          `Use --lenient to skip invalid schemas or --ignore-warnings to ignore non-critical issues`,
+        );
+      }
+    }
+
+    // If validate-only flag, skip code generation
+    if (args.validateOnly) {
+      displaySuccessMessage("Validation complete. Skipping code generation (--validate-only)");
+      return;
     }
 
     // Determine files to generate

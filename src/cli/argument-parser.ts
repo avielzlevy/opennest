@@ -2,6 +2,11 @@ import { Command } from 'commander';
 import { InvalidArgumentsError } from '../errors/cli-error';
 
 /**
+ * Validation recovery strategy
+ */
+export type ValidationRecoveryStrategy = 'strict' | 'lenient' | 'ignore-warnings';
+
+/**
  * Parsed CLI arguments with all available options
  */
 export interface CliArgs {
@@ -12,6 +17,11 @@ export interface CliArgs {
   onlyDecorator: boolean;
   force: boolean;
   verbose: boolean;
+  strict?: boolean;
+  lenient?: boolean;
+  ignoreWarnings?: boolean;
+  validateOnly?: boolean;
+  validateVerbose?: boolean;
 }
 
 /**
@@ -61,6 +71,14 @@ export class ArgumentParser {
       );
     }
 
+    // Validate that only one validation strategy flag is used
+    const validationFlags = [options.strict, options.lenient, options.ignoreWarnings].filter(Boolean);
+    if (validationFlags.length > 1) {
+      throw new InvalidArgumentsError(
+        'Cannot use multiple validation flags simultaneously. Choose one: --strict, --lenient, or --ignore-warnings'
+      );
+    }
+
     return {
       spec,
       output: options.output || './generated',
@@ -69,6 +87,11 @@ export class ArgumentParser {
       onlyDecorator: !!options.onlyDecorator,
       force: !!options.force,
       verbose: !!options.verbose,
+      strict: !!options.strict,
+      lenient: !!options.lenient,
+      ignoreWarnings: !!options.ignoreWarnings,
+      validateOnly: !!options.validateOnly,
+      validateVerbose: !!options.validateVerbose,
     };
   }
 
@@ -87,6 +110,11 @@ export class ArgumentParser {
       .option('--only-decorator', 'Generate only decorator files')
       .option('--force, -f', 'Overwrite existing files without prompting')
       .option('-v, --verbose', 'Show detailed output and error stack traces')
+      .option('--strict', 'Fail on any validation error or warning (default)')
+      .option('--lenient', 'Skip invalid schemas/operations and continue generation')
+      .option('--ignore-warnings', 'Only fail on errors, skip warnings')
+      .option('--validate-only', 'Validate spec without generating code')
+      .option('--validate-verbose', 'Show all validation checks (used with --validate-only)')
       .addHelpText(
         'after',
         `
@@ -102,6 +130,17 @@ Examples:
 
   # Overwrite existing files
   $ opennest ./specs/api.yaml --force
+
+  # Validate specification only
+  $ opennest ./specs/api.yaml --validate-only
+
+  # Generate with lenient mode (skip invalid schemas)
+  $ opennest ./specs/api.yaml --lenient
+
+Validation Modes:
+  --strict (default)    - Fail on any validation error or warning
+  --lenient             - Skip invalid schemas/operations, continue generation
+  --ignore-warnings     - Only fail on errors, skip non-critical issues
 
 Generators:
   ✓ DTO Generator     - Generates data transfer object classes from schemas

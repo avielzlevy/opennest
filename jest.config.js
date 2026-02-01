@@ -18,4 +18,7 @@ module.exports = {
     indent: 2,
   },
   setupFilesAfterEnv: ["<rootDir>/tests/jest-setup.ts"],
+  transformIgnorePatterns: [
+    "node_modules/(?!(chalk)/)",
+  ],
 };
