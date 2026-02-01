@@ -1464,4 +1464,400 @@ describe("ControllerGenerator", () => {
       expect(code).toMatchSnapshot();
     });
   });
+
+  describe("ControllerGenerator - Domain-based Structure", () => {
+    const domainConfig = { structure: "domain-based" as const };
+
+    it("should generate controller in domain-specific directory", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            get: {
+              operationId: "listPets",
+              tags: ["pets"],
+              responses: {
+                "200": { description: "List of pets" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/controllers/pets.controller.ts"
+      );
+      expect(sourceFile).toBeDefined();
+
+      const controllerClass = sourceFile!.getClass("PetsController");
+      expect(controllerClass).toBeDefined();
+    });
+
+    it("should separate different domains into different directories", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            get: {
+              operationId: "listPets",
+              tags: ["pets"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+          "/users": {
+            get: {
+              operationId: "listUsers",
+              tags: ["users"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+          "/stores": {
+            get: {
+              operationId: "listStores",
+              tags: ["stores"],
+              responses: { "200": { description: "OK" } },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const petsFile = project.getSourceFile(
+        "generated/pets/controllers/pets.controller.ts"
+      );
+      const usersFile = project.getSourceFile(
+        "generated/users/controllers/users.controller.ts"
+      );
+      const storesFile = project.getSourceFile(
+        "generated/stores/controllers/stores.controller.ts"
+      );
+
+      expect(petsFile).toBeDefined();
+      expect(usersFile).toBeDefined();
+      expect(storesFile).toBeDefined();
+    });
+
+    it("should generate identical code to type-based structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/products": {
+            get: {
+              operationId: "listProducts",
+              tags: ["products"],
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          },
+        },
+      };
+
+      // Generate with type-based structure
+      const typeProject = new Project({ useInMemoryFileSystem: true });
+      const typeGenerator = new ControllerGenerator();
+      typeGenerator.generate(doc, typeProject, "generated");
+      const typeFile = typeProject.getSourceFile(
+        "generated/controllers/products.controller.ts"
+      );
+      const typeCode = normalizeCode(typeFile!.getFullText());
+
+      // Generate with domain-based structure
+      const domainProject = new Project({ useInMemoryFileSystem: true });
+      const domainGenerator = new ControllerGenerator();
+      domainGenerator.generate(doc, domainProject, "generated", domainConfig);
+      const domainFile = domainProject.getSourceFile(
+        "generated/products/controllers/products.controller.ts"
+      );
+      const domainCode = normalizeCode(domainFile!.getFullText());
+
+      // Code should be identical
+      expect(typeCode).toBe(domainCode);
+    });
+
+    it("should handle POST operation with request body in domain structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets": {
+            post: {
+              operationId: "createPet",
+              tags: ["pets"],
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/NewPet" },
+                  },
+                },
+              },
+              responses: {
+                "201": {
+                  description: "Pet created",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Pet" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Pet: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+              },
+            },
+            NewPet: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/controllers/pets.controller.ts"
+      );
+      const controllerClass = sourceFile!.getClass("PetsController");
+      const method = controllerClass!.getMethod("createPet");
+
+      expect(method).toBeDefined();
+      expect(method!.getDecorators().some((d) => d.getName() === "Post")).toBe(
+        true
+      );
+
+      const bodyParam = method!.getParameters().find((p) => p.getName() === "body");
+      expect(bodyParam).toBeDefined();
+      expect(bodyParam!.getType().getText()).toContain("NewPet");
+    });
+
+    it("should handle path parameters in domain structure", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/pets/{petId}": {
+            get: {
+              operationId: "getPetById",
+              tags: ["pets"],
+              parameters: [
+                {
+                  name: "petId",
+                  in: "path",
+                  required: true,
+                  schema: { type: "integer" },
+                },
+              ],
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/pets/controllers/pets.controller.ts"
+      );
+      const method = sourceFile!.getClass("PetsController")!.getMethod("getPetById");
+
+      const pathParam = method!.getParameters().find((p) => p.getName() === "petId");
+      expect(pathParam).toBeDefined();
+      expect(pathParam!.getDecorators().some((d) => d.getName() === "Param")).toBe(
+        true
+      );
+      expect(pathParam!.getType().getText()).toBe("number");
+    });
+
+    it("should match snapshot for domain-based simple controller", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/orders": {
+            get: {
+              operationId: "listOrders",
+              tags: ["orders"],
+              parameters: [
+                {
+                  name: "status",
+                  in: "query",
+                  schema: { type: "string" },
+                },
+              ],
+              responses: {
+                "200": {
+                  description: "OK",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Order" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Order: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                total: { type: "number" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/orders/controllers/orders.controller.ts"
+      );
+      const code = normalizeCode(sourceFile!.getFullText());
+
+      expect(code).toMatchSnapshot("domain-based-orders-controller");
+    });
+
+    it("should match snapshot for domain-based controller with CRUD operations", () => {
+      const doc: OpenAPIV3.Document = {
+        openapi: "3.0.0",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items": {
+            get: {
+              operationId: "listItems",
+              tags: ["items"],
+              responses: {
+                "200": {
+                  description: "OK",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "array",
+                        items: { $ref: "#/components/schemas/Item" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            post: {
+              operationId: "createItem",
+              tags: ["items"],
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    schema: { $ref: "#/components/schemas/CreateItemDto" },
+                  },
+                },
+              },
+              responses: {
+                "201": {
+                  description: "Created",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Item" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "/items/{id}": {
+            get: {
+              operationId: "getItem",
+              tags: ["items"],
+              parameters: [
+                {
+                  name: "id",
+                  in: "path",
+                  required: true,
+                  schema: { type: "integer" },
+                },
+              ],
+              responses: {
+                "200": {
+                  description: "OK",
+                  content: {
+                    "application/json": {
+                      schema: { $ref: "#/components/schemas/Item" },
+                    },
+                  },
+                },
+              },
+            },
+            delete: {
+              operationId: "deleteItem",
+              tags: ["items"],
+              parameters: [
+                {
+                  name: "id",
+                  in: "path",
+                  required: true,
+                  schema: { type: "integer" },
+                },
+              ],
+              responses: {
+                "204": {
+                  description: "No Content",
+                },
+              },
+            },
+          },
+        },
+        components: {
+          schemas: {
+            Item: {
+              type: "object",
+              properties: {
+                id: { type: "integer" },
+                name: { type: "string" },
+              },
+            },
+            CreateItemDto: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+              },
+            },
+          },
+        },
+      };
+
+      generator.generate(doc, project, "generated", domainConfig);
+
+      const sourceFile = project.getSourceFile(
+        "generated/items/controllers/items.controller.ts"
+      );
+      const code = normalizeCode(sourceFile!.getFullText());
+
+      expect(code).toMatchSnapshot("domain-based-items-crud-controller");
+    });
+  });
 });
