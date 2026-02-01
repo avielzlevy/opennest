@@ -12,6 +12,12 @@ import { TypeMapper } from "../utils/type-mapper";
 import { isReferenceObject, isSchemaObject } from "../utils/type-guards";
 import { toEnumKey, normalizeSchemaName } from "../utils/formatting-helpers";
 import { displayWarningMessage } from "../cli/error-handler";
+import {
+  isValidIdentifier,
+  sanitizeIdentifier,
+  resolveNestJsConflict,
+  hasNestJsConflict,
+} from "../validation/identifier-validator";
 
 /**
  * Error recovery strategy for generator
@@ -60,7 +66,25 @@ export class DtoGenerator implements IGenerator {
         }
 
         // Normalize class name to avoid reserved word collisions
-        const className = normalizeSchemaName(name);
+        let className = normalizeSchemaName(name);
+
+        // NOTE: NestJS conflict resolution is detected by validator but not applied
+        // in generator to maintain backward compatibility. When implementing conflict
+        // resolution, all generators (DTO, Controller, Decorator) must be updated
+        // to maintain consistency in import paths.
+        if (hasNestJsConflict(className)) {
+          // Log for awareness but don't rename to maintain import consistency
+          if (this.recoveryStrategy === 'warn') {
+            warnings.push(`Schema name "${className}" may conflict with NestJS decorator`);
+          }
+        }
+
+        // Validate identifier and sanitize if needed
+        if (!isValidIdentifier(className)) {
+          const original = className;
+          className = sanitizeIdentifier(className, 'Dto');
+          warnings.push(`Schema name "${original}" is not a valid identifier, sanitized to "${className}"`);
+        }
 
         const sourceFile = project.createSourceFile(
           `${outputPath}/dtos/${className}.dto.ts`,

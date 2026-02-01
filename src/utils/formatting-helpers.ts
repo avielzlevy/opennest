@@ -94,6 +94,9 @@ export function extractRefName(ref: string): string | null {
  * Normalizes schema names to avoid reserved word collisions.
  * Specifically handles 'Object' → 'ObjectDto' conversion.
  *
+ * Note: For comprehensive identifier validation and NestJS conflict resolution,
+ * use the identifier-validator module directly.
+ *
  * @param name - The schema name
  * @returns Normalized name
  */

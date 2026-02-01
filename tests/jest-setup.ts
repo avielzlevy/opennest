@@ -7,6 +7,24 @@
  * - Provide custom matchers and helpers for AST validation
  */
 
+// Mock chalk globally to avoid ESM import issues in tests
+jest.mock('chalk', () => {
+  const mockChalk = (str: string) => str;
+  mockChalk.bold = (str: string) => str;
+  mockChalk.red = Object.assign(mockChalk, {
+    bold: (str: string) => str,
+  });
+  mockChalk.yellow = Object.assign(mockChalk, {
+    bold: (str: string) => str,
+  });
+  mockChalk.gray = mockChalk;
+  mockChalk.cyan = mockChalk;
+  mockChalk.blue = Object.assign(mockChalk, {
+    bold: (str: string) => str,
+  });
+  return { __esModule: true, default: mockChalk };
+});
+
 // Set default test timeout (5 seconds for unit tests)
 jest.setTimeout(5000);
 
