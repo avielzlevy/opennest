@@ -32,6 +32,7 @@ Never write boilerplate CRUD code again. OpenNest converts your OpenAPI spec int
 - ✓ Supports OpenAPI 3.0.0-3.0.3
 - ✓ Graceful error handling (never crashes)
 - ✓ Multiple validation strategies (--strict, --lenient, --validate-only)
+- ✓ Configurable output structures (type-based, domain-based)
 - ✓ 600+ tests, 85%+ coverage
 
 ## Installation
@@ -84,21 +85,80 @@ opennest spec.json --validate-only
 opennest spec.json --verbose
 ```
 
-### Output Structure
+## Understanding Output Structures
+
+OpenNest supports two output organization patterns to match your project preferences:
+
+### Type-based Structure (Default)
+
+Organizes generated files by type (DTOs, controllers, decorators) - ideal for small to medium APIs:
 
 ```
 generated/
 ├── dtos/
 │   ├── User.dto.ts
 │   ├── Product.dto.ts
+│   ├── Order.dto.ts
 │   └── ...
 ├── controllers/
 │   ├── users.controller.ts
 │   ├── products.controller.ts
+│   ├── orders.controller.ts
 │   └── ...
 └── decorators/
     └── endpoint.decorator.ts
 ```
+
+**Usage:**
+```bash
+opennest ./api.yaml
+# or explicitly:
+opennest ./api.yaml --structure type-based
+```
+
+### Domain-based Structure
+
+Organizes files by domain/resource - ideal for large APIs with many resources:
+
+```
+generated/
+├── user/
+│   ├── dtos/
+│   │   └── User.dto.ts
+│   └── controllers/
+│       └── user.controller.ts
+├── product/
+│   ├── dtos/
+│   │   └── Product.dto.ts
+│   └── controllers/
+│       └── product.controller.ts
+├── order/
+│   ├── dtos/
+│   │   └── Order.dto.ts
+│   └── controllers/
+│       └── order.controller.ts
+└── decorators/
+    └── endpoint.decorator.ts
+```
+
+**Usage:**
+```bash
+opennest ./api.yaml --structure domain-based
+```
+
+### Choosing a Structure
+
+**Use Type-based when:**
+- Your API has fewer than 10 resources/tags
+- You prefer organizing by technical layers
+- You want quick access to all DTOs or controllers
+- Your team is familiar with traditional NestJS project layouts
+
+**Use Domain-based when:**
+- Your API has many resources (10+)
+- You organize by business domains/bounded contexts
+- Each resource has multiple DTOs and complex logic
+- You want to co-locate domain-related files
 
 ## Supported Versions
 
@@ -118,6 +178,7 @@ generated/
 - Single generator per invocation (run multiple times for full output)
 - OpenAPI 2.0 (Swagger) and 3.1.x not yet supported
 - Validation errors may skip schemas (use --strict to fail instead)
+- Currently supports two structure patterns; others not available
 
 ## Roadmap
 
