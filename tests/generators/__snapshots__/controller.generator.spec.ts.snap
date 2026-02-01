@@ -8,7 +8,7 @@ import { CreateUserDto } from "../dtos/CreateUserDto.dto";
 import { User } from "../dtos/User.dto";
 
 export interface IUsersService {
-    createUser(...args: any[]): Promise<User>;
+    createUser(body: CreateUserDto): Promise<User>;
 }
 
 @ApiTags('users')
@@ -31,7 +31,7 @@ import { ApiTags } from "@nestjs/swagger";
 import { SearchEndpoint } from "../decorators/search.decorator";
 
 export interface ISearchService {
-    search(...args: any[]): Promise<any>;
+    search(q: string, limit: number, offset: number, XRequestID: string): Promise<any>;
 }
 
 @ApiTags('search')
@@ -56,9 +56,9 @@ import { Product } from "../dtos/Product.dto";
 import { UpdateProductDto } from "../dtos/UpdateProductDto.dto";
 
 export interface IProductsService {
-    getProduct(...args: any[]): Promise<Product>;
-    updateProduct(...args: any[]): Promise<Product>;
-    deleteProduct(...args: any[]): Promise<void>;
+    getProduct(id: number): Promise<Product>;
+    updateProduct(id: number, body: UpdateProductDto): Promise<Product>;
+    deleteProduct(id: number): Promise<void>;
 }
 
 @ApiTags('products')
@@ -95,11 +95,11 @@ import { NewPet } from "../dtos/NewPet.dto";
 import { Pet } from "../dtos/Pet.dto";
 
 export interface IPetsService {
-    listPets(...args: any[]): Promise<Pet[]>;
-    createPet(...args: any[]): Promise<Pet>;
-    getPetById(...args: any[]): Promise<Pet>;
-    updatePet(...args: any[]): Promise<Pet>;
-    deletePet(...args: any[]): Promise<any>;
+    listPets(limit: number, status: string): Promise<Pet[]>;
+    createPet(body: NewPet): Promise<Pet>;
+    getPetById(petId: number): Promise<Pet>;
+    updatePet(petId: number, body: NewPet): Promise<Pet>;
+    deletePet(petId: number): Promise<any>;
 }
 
 @ApiTags('pets')
@@ -147,7 +147,7 @@ import { ListPetsEndpoint } from "../decorators/pets.decorator";
 import { Pet } from "../dtos/Pet.dto";
 
 export interface IPetsService {
-    listPets(...args: any[]): Promise<Pet[]>;
+    listPets(limit: number): Promise<Pet[]>;
 }
 
 @ApiTags('pets')

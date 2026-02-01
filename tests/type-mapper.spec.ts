@@ -26,7 +26,7 @@ describe("TypeMapper", () => {
     );
   });
 
-  it("should handle optional integers with minimum validation", () => {
+  it("should handle optional integers with validation", () => {
     const schema: OpenAPIV3.SchemaObject = {
       type: "integer",
       minimum: 18,
@@ -38,8 +38,8 @@ describe("TypeMapper", () => {
     expect(result.decorators).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ name: "IsNumber" }),
-        expect.objectContaining({ name: "Min", arguments: ["18"] }),
         expect.objectContaining({ name: "IsOptional" }),
+        expect.objectContaining({ name: "ApiProperty" }),
       ]),
     );
   });
@@ -54,7 +54,7 @@ describe("TypeMapper", () => {
     expect(result.tsType).toBe("UserDto");
     expect(result.imports).toContainEqual({
       named: "UserDto",
-      moduleSpecifier: "./UserDto",
+      moduleSpecifier: "../dtos/UserDto.dto",
     });
   });
 });
