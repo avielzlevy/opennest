@@ -10,12 +10,14 @@ import {
 } from "../utils/schema-helpers";
 import { capitalize, buildDtoImportPath } from "../utils/formatting-helpers";
 import { isParameterObject, isSchemaObject } from "../utils/type-guards";
+import { OutputStructureConfig, resolveOutputPath, extractResourceNameFromTag } from "../utils/output-structure-manager";
 
 export class DecoratorGenerator implements IGenerator {
   public generate(
     document: OpenAPIV3.Document,
     project: Project,
     outputPath: string = "./generated",
+    config?: OutputStructureConfig,
   ): void {
     if (!document.paths) return;
 
@@ -25,8 +27,16 @@ export class DecoratorGenerator implements IGenerator {
       const resourceName = tagName.replace(/\s+/g, "");
       const fileName = resourceName.toLowerCase();
 
+      // Resolve output path based on structure configuration
+      const decoratorPath = resolveOutputPath(
+        outputPath || 'generated',
+        'decorators',
+        extractResourceNameFromTag(tagName),
+        config || { structure: 'type-based' }
+      );
+
       const sourceFile = project.createSourceFile(
-        `${outputPath}/decorators/${fileName}.decorator.ts`,
+        decoratorPath,
         "",
         { overwrite: true },
       );
