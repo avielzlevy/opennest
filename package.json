@@ -6,6 +6,12 @@
   "bin": {
     "opennest": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "readme.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md"
+  ],
   "scripts": {
     "start": "ts-node src/cli.ts",
     "dev": "ts-node src/cli.ts",
