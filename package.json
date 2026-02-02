@@ -1,5 +1,5 @@
 {
-  "name": "opennest",
+  "name": "@anthropics/opennest",
   "version": "1.0.0",
   "description": "Generate NestJS skeleton code (DTOs, Controllers, Decorators) from OpenAPI specifications. CLI tool for API-first development.",
   "main": "dist/cli.js",
