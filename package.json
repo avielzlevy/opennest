@@ -2,12 +2,13 @@
   "name": "@anthropics/opennest",
   "version": "1.0.0",
   "description": "Generate NestJS skeleton code (DTOs, Controllers, Decorators) from OpenAPI specifications. CLI tool for API-first development.",
-  "main": "dist/cli.js",
+  "main": "dist/src/cli.js",
   "bin": {
-    "opennest": "dist/cli.js"
+    "opennest": "dist/src/cli.js"
   },
   "files": [
-    "dist",
+    "dist/src/**/*.js",
+    "dist/src/**/*.js.map",
     "readme.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md"
