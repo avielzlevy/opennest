@@ -192,9 +192,9 @@ Generators:
   ✓ Decorator Generator  - Generates method decorators and guards
 
 Documentation:
-  📖 GitHub: https://github.com/example/opennest
-  📚 Docs: https://docs.example.com
-  💬 Issues: https://github.com/example/opennest/issues
+  📖 GitHub: https://github.com/anthropics/opennest
+  📚 Docs: https://github.com/anthropics/opennest#readme
+  💬 Issues: https://github.com/anthropics/opennest/issues
 `
       );
   }
