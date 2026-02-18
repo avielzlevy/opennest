@@ -32,7 +32,7 @@ export type GeneratorRecoveryStrategy = "skip" | "fail-fast" | "warn";
 export class DtoGenerator implements IGenerator {
   constructor(
     private readonly typeMapper: TypeMapper,
-    private readonly recoveryStrategy: GeneratorRecoveryStrategy = "warn",
+    private readonly recoveryStrategy: GeneratorRecoveryStrategy = "fail-fast",
   ) {}
 
   public generate(
