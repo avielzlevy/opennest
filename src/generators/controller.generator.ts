@@ -423,11 +423,14 @@ export class ControllerGenerator implements IGenerator {
           return aOpt - bOpt;
         });
 
-        for (const cp of collectedParams) {
+        const requiredCollected = collectedParams.filter((cp) => !cp.isOptional);
+        const optionalCollected = collectedParams.filter((cp) => cp.isOptional);
+
+        for (const cp of requiredCollected) {
           methodDecl.addParameter({
             name: cp.sanitized,
             type: cp.paramType,
-            hasQuestionToken: cp.isOptional,
+            hasQuestionToken: false,
             decorators: [
               { name: cp.decoratorName, arguments: [`'${cp.originalName}'`] },
             ],
@@ -459,6 +462,17 @@ export class ControllerGenerator implements IGenerator {
             name: "res",
             type: "Response",
             decorators: [{ name: "Res", arguments: [] }],
+          });
+        }
+
+        for (const cp of optionalCollected) {
+          methodDecl.addParameter({
+            name: cp.sanitized,
+            type: cp.paramType,
+            hasQuestionToken: true,
+            decorators: [
+              { name: cp.decoratorName, arguments: [`'${cp.originalName}'`] },
+            ],
           });
         }
 
