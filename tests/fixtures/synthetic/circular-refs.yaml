@@ -1,0 +1,42 @@
+openapi: 3.0.0
+info:
+  title: Circular Reference Test
+  version: 1.0.0
+  description: Test recursive schema references (Person with children array of Person)
+paths:
+  /person/{id}:
+    get:
+      operationId: getPersonById
+      tags:
+        - person
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Person with recursive children
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+components:
+  schemas:
+    Person:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/Person'
+        spouse:
+          $ref: '#/components/schemas/Person'

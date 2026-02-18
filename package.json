@@ -1,0 +1,72 @@
+{
+  "name": "@anthropics/opennest",
+  "version": "1.0.0",
+  "description": "Generate NestJS skeleton code (DTOs, Controllers, Decorators) from OpenAPI specifications. CLI tool for API-first development.",
+  "main": "dist/src/cli.js",
+  "bin": {
+    "opennest": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src/**/*.js",
+    "dist/src/**/*.js.map",
+    "readme.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md"
+  ],
+  "scripts": {
+    "start": "ts-node src/cli.ts",
+    "dev": "ts-node src/cli.ts",
+    "test": "jest",
+    "build": "tsc",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "keywords": [
+    "nestjs",
+    "openapi",
+    "swagger",
+    "code-generation",
+    "cli",
+    "typescript",
+    "dto",
+    "controller",
+    "api-first",
+    "skeleton"
+  ],
+  "author": "OpenNest Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/opennest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anthropics/opennest/issues"
+  },
+  "homepage": "https://github.com/anthropics/opennest#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.0.0",
+    "@inquirer/prompts": "^6.0.0",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/swagger": "^7.0.0",
+    "chalk": "^5.0.0",
+    "change-case": "^4.1.2",
+    "class-transformer": "^0.5.0",
+    "class-validator": "^0.14.0",
+    "commander": "^11.0.0",
+    "js-yaml": "^4.1.1",
+    "openapi-types": "^12.0.0",
+    "reflect-metadata": "^0.1.13",
+    "ts-morph": "^20.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

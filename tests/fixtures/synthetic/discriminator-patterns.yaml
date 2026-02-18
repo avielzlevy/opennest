@@ -1,0 +1,74 @@
+openapi: 3.0.0
+info:
+  title: Discriminator Pattern Test
+  version: 1.0.0
+  description: Test polymorphic type discrimination with discriminator field
+paths:
+  /animal:
+    post:
+      operationId: createAnimal
+      tags:
+        - animal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Animal'
+      responses:
+        '201':
+          description: Animal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+components:
+  schemas:
+    Animal:
+      type: object
+      required:
+        - type
+        - name
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+      discriminator:
+        propertyName: type
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
+          bird: '#/components/schemas/Bird'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+        - $ref: '#/components/schemas/Bird'
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          properties:
+            meow:
+              type: boolean
+            lives:
+              type: integer
+              default: 9
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          properties:
+            bark:
+              type: boolean
+            breed:
+              type: string
+    Bird:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          properties:
+            fly:
+              type: boolean
+            wingspan:
+              type: number

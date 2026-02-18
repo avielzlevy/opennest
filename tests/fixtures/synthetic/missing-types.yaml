@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: Missing Types Test
+  version: 1.0.0
+  description: Test schemas with missing type specifications
+paths:
+  /entity:
+    post:
+      operationId: createEntity
+      tags:
+        - entity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Entity'
+      responses:
+        '201':
+          description: Entity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+components:
+  schemas:
+    Entity:
+      properties:
+        id:
+          # No type specified - should default gracefully
+          description: Entity ID
+        name:
+          type: string
+        value:
+          # No type, but nullable specified
+          nullable: true
+        metadata:
+          # Object without type
+          properties:
+            key:
+              type: string
+            data:
+              # Nested missing type
+              description: Some data
+        tags:
+          # Array without explicit type, but has items
+          items:
+            type: string

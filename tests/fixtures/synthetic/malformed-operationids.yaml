@@ -1,0 +1,56 @@
+openapi: 3.0.0
+info:
+  title: Malformed OperationIds Test
+  version: 1.0.0
+  description: Test operationId normalization (special chars, duplicates, missing)
+paths:
+  /users:
+    post:
+      operationId: create-user
+      tags:
+        - user
+      responses:
+        '201':
+          description: User created
+    get:
+      operationId: create_user
+      tags:
+        - user
+      responses:
+        '200':
+          description: List users
+  /users/{id}:
+    get:
+      operationId: createUser
+      tags:
+        - user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Get user
+    delete:
+      # Missing operationId - should fallback to tag+method
+      tags:
+        - user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted
+  /special!@#$%chars:
+    get:
+      operationId: special!@#$%Chars
+      tags:
+        - special
+      responses:
+        '200':
+          description: Special chars test

@@ -1,0 +1,39 @@
+# Example GitHub Actions workflow for projects using @anthropics/opennest
+# Copy this to .github/workflows/build.yml in your project
+
+name: Build with OpenNest
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js with GPR
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@anthropics'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GPR_TOKEN }}
+
+      - name: Generate API code with OpenNest
+        run: npx @anthropics/opennest ./api-spec.yaml --output ./src/generated
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests
+        run: npm test

@@ -1,0 +1,5 @@
+# .npmrc configuration for CI/CD environments
+# This uses environment variable interpolation (safe to commit)
+
+@anthropics:registry=https://npm.pkg.github.com
+//npm.pkg.github.com/:_authToken=${NPM_TOKEN}

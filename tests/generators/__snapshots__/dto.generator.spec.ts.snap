@@ -1,0 +1,178 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based DTO with enum: domain-based-order-enum-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsIn, IsNotEmpty } from "class-validator";
+
+export const ORDER_STATUS = {
+                                PENDING: 'pending',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled'
+                            } as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+
+export class Order {
+    @IsIn(Object.values(ORDER_STATUS))
+    @ApiProperty({"description":"Order status","example":"pending","enum":["pending","completed","cancelled"],"enumName":"OrderStatus"})
+    @IsNotEmpty()
+    public status!: OrderStatus;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based DTO with reference: domain-based-article-reference-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
+import { Tag } from "../dtos/Tag.dto";
+
+export class Article {
+    @IsString()
+    @ApiProperty({"type":"string","example":"title"})
+    @IsNotEmpty()
+    public title!: string;
+    @ValidateNested()
+    @Type(() => Tag)
+    @ApiProperty({ type: () => Tag, required: false })
+    @IsOptional()
+    public tag?: Tag | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Domain-based Structure should match snapshot for domain-based simple DTO: domain-based-product-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+
+export class Product {
+    @IsString()
+    @ApiProperty({"type":"string","description":"Unique identifier","example":"id"})
+    @IsNotEmpty()
+    public id!: string;
+    @IsString()
+    @ApiProperty({"type":"string","example":"name","required":false})
+    @IsOptional()
+    public name?: string | undefined;
+    @IsNumber()
+    @ApiProperty({"type":"number","example":1,"required":false})
+    @IsOptional()
+    public price?: number | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with array: array-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsArray, IsOptional } from "class-validator";
+
+export class ArrayDto {
+    @IsArray()
+    @ApiProperty({ type: [String], required: false })
+    @IsOptional()
+    public tags?: string[] | undefined;
+    @IsArray()
+    @ApiProperty({ type: [Number], required: false })
+    @IsOptional()
+    public scores?: number[] | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with enum: enum-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsIn, IsNotEmpty } from "class-validator";
+
+export const ENUM_DTO_ROLE = {
+                                ADMIN: 'admin',
+    USER: 'user',
+    GUEST: 'guest'
+                            } as const;
+
+export type EnumDtoRole = (typeof ENUM_DTO_ROLE)[keyof typeof ENUM_DTO_ROLE];
+
+export class EnumDto {
+    @IsIn(Object.values(ENUM_DTO_ROLE))
+    @ApiProperty({"description":"User role","example":"admin","enum":["admin","user","guest"],"enumName":"EnumDtoRole"})
+    @IsNotEmpty()
+    public role!: EnumDtoRole;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for DTO with reference: reference-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { Type } from "class-transformer";
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
+import { CategoryDto } from "../dtos/CategoryDto.dto";
+
+export class ProductDto {
+    @IsString()
+    @ApiProperty({"type":"string","example":"name"})
+    @IsNotEmpty()
+    public name!: string;
+    @ValidateNested()
+    @Type(() => CategoryDto)
+    @ApiProperty({ type: () => CategoryDto, required: false })
+    @IsOptional()
+    public category?: CategoryDto | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for complex DTO with all features: complex-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsArray, IsBoolean, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from "class-validator";
+
+export const COMPLEX_DTO_STATUS = {
+                                DRAFT: 'draft',
+    PUBLISHED: 'published'
+                            } as const;
+
+export type ComplexDtoStatus = (typeof COMPLEX_DTO_STATUS)[keyof typeof COMPLEX_DTO_STATUS];
+
+export class ComplexDto {
+    @IsNumber()
+    @ApiProperty({"type":"number","description":"ID","example":1})
+    @IsNotEmpty()
+    public id!: number;
+    @IsString()
+    @ApiProperty({"type":"string","example":"name","required":false})
+    @IsOptional()
+    public name?: string | undefined;
+    @IsBoolean()
+    @ApiProperty({"type":"boolean","example":true,"required":false})
+    @IsOptional()
+    public active?: boolean | undefined;
+    @IsIn(Object.values(COMPLEX_DTO_STATUS))
+    @ApiProperty({"example":"draft","enum":["draft","published"],"enumName":"ComplexDtoStatus"})
+    @IsNotEmpty()
+    public status!: ComplexDtoStatus;
+    @IsArray()
+    @ApiProperty({ type: [String], required: false })
+    @IsOptional()
+    public tags?: string[] | undefined;
+    @IsObject()
+    @ApiProperty({"required":false})
+    @IsOptional()
+    public metadata?: Record<string, any> | undefined;
+}
+"
+`;
+
+exports[`DtoGenerator Unit Tests Snapshot Testing should match snapshot for simple DTO: simple-dto 1`] = `
+"import { ApiProperty } from "@nestjs/swagger";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
+
+export class SimpleDto {
+    @IsString()
+    @ApiProperty({"type":"string","description":"Unique identifier","example":"id"})
+    @IsNotEmpty()
+    public id!: string;
+    @IsString()
+    @ApiProperty({"type":"string","example":"name","required":false})
+    @IsOptional()
+    public name?: string | undefined;
+}
+"
+`;

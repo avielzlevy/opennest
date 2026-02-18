@@ -1,0 +1,235 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`ControllerGenerator ControllerGenerator - Domain-based Structure should match snapshot for domain-based controller with CRUD operations: domain-based-items-crud-controller 1`] = `
+"import { Body, Controller, Delete, Get, Inject, Param, Post } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CreateItemEndpoint, DeleteItemEndpoint, GetItemEndpoint, ListItemsEndpoint } from "../decorators/items.decorator";
+import { CreateItemDto } from "../dtos/CreateItemDto.dto";
+import { Item } from "../dtos/Item.dto";
+
+export interface IItemsService {
+    listItems(data?: unknown): Promise<Item[]>;
+    createItem(body: CreateItemDto): Promise<Item>;
+    getItem(id: number): Promise<Item>;
+    deleteItem(id: number): Promise<void>;
+}
+
+@ApiTags('items')
+@Controller('api/items')
+export class ItemsController {
+    constructor(@Inject('IItemsService') private readonly service: IItemsService) {
+    }
+
+    @Get('')
+    @ListItemsEndpoint()
+    async listItems(): Promise<Item[]> {
+        return this.service.listItems();
+    }
+
+    @Post('')
+    @CreateItemEndpoint()
+    async createItem(@Body() body: CreateItemDto): Promise<Item> {
+        return this.service.createItem(body);
+    }
+
+    @Get(':id')
+    @GetItemEndpoint()
+    async getItem(@Param('id') id: number): Promise<Item> {
+        return this.service.getItem(id);
+    }
+
+    @Delete(':id')
+    @DeleteItemEndpoint()
+    async deleteItem(@Param('id') id: number): Promise<void> {
+        return this.service.deleteItem(id);
+    }
+}"
+`;
+
+exports[`ControllerGenerator ControllerGenerator - Domain-based Structure should match snapshot for domain-based simple controller: domain-based-orders-controller 1`] = `
+"import { Controller, Get, Inject, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { ListOrdersEndpoint } from "../decorators/orders.decorator";
+import { Order } from "../dtos/Order.dto";
+
+export interface IOrdersService {
+    listOrders(status?: string): Promise<Order[]>;
+}
+
+@ApiTags('orders')
+@Controller('api/orders')
+export class OrdersController {
+    constructor(@Inject('IOrdersService') private readonly service: IOrdersService) {
+    }
+
+    @Get('')
+    @ListOrdersEndpoint()
+    async listOrders(@Query('status') status?: string): Promise<Order[]> {
+        return this.service.listOrders(status);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for POST controller with request body 1`] = `
+"import { Body, Controller, Inject, Post } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CreateUserEndpoint } from "../decorators/users.decorator";
+import { CreateUserDto } from "../dtos/CreateUserDto.dto";
+import { User } from "../dtos/User.dto";
+
+export interface IUsersService {
+    createUser(body: CreateUserDto): Promise<User>;
+}
+
+@ApiTags('users')
+@Controller('api/users')
+export class UsersController {
+    constructor(@Inject('IUsersService') private readonly service: IUsersService) {
+    }
+
+    @Post('')
+    @CreateUserEndpoint()
+    async createUser(@Body() body: CreateUserDto): Promise<User> {
+        return this.service.createUser(body);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for controller with complex parameters 1`] = `
+"import { Controller, Get, Headers, Inject, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { SearchEndpoint } from "../decorators/search.decorator";
+
+export interface ISearchService {
+    search(q: string, limit?: number, offset?: number, XRequestID?: string): Promise<any>;
+}
+
+@ApiTags('search')
+@Controller('api/search')
+export class SearchController {
+    constructor(@Inject('ISearchService') private readonly service: ISearchService) {
+    }
+
+    @Get('')
+    @SearchEndpoint()
+    async search(@Query('q') q: string, @Query('limit') limit?: number, @Query('offset') offset?: number, @Headers('X-Request-ID') XRequestID?: string): Promise<any> {
+        return this.service.search(q, limit, offset, XRequestID);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for controller with multiple HTTP methods 1`] = `
+"import { Body, Controller, Delete, Get, Inject, Param, Put } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { DeleteProductEndpoint, GetProductEndpoint, UpdateProductEndpoint } from "../decorators/products.decorator";
+import { Product } from "../dtos/Product.dto";
+import { UpdateProductDto } from "../dtos/UpdateProductDto.dto";
+
+export interface IProductsService {
+    getProduct(id: number): Promise<Product>;
+    updateProduct(id: number, body: UpdateProductDto): Promise<Product>;
+    deleteProduct(id: number): Promise<void>;
+}
+
+@ApiTags('products')
+@Controller('api/products')
+export class ProductsController {
+    constructor(@Inject('IProductsService') private readonly service: IProductsService) {
+    }
+
+    @Get(':id')
+    @GetProductEndpoint()
+    async getProduct(@Param('id') id: number): Promise<Product> {
+        return this.service.getProduct(id);
+    }
+
+    @Put(':id')
+    @UpdateProductEndpoint()
+    async updateProduct(@Param('id') id: number, @Body() body: UpdateProductDto): Promise<Product> {
+        return this.service.updateProduct(id, body);
+    }
+
+    @Delete(':id')
+    @DeleteProductEndpoint()
+    async deleteProduct(@Param('id') id: number): Promise<void> {
+        return this.service.deleteProduct(id);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for petstore controller 1`] = `
+"import { Body, Controller, Delete, Get, Inject, Param, Post, Put, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { CreatePetEndpoint, DeletePetEndpoint, GetPetByIdEndpoint, ListPetsEndpoint, UpdatePetEndpoint } from "../decorators/pets.decorator";
+import { NewPet } from "../dtos/NewPet.dto";
+import { Pet } from "../dtos/Pet.dto";
+
+export interface IPetsService {
+    listPets(limit?: number, status?: string): Promise<Pet[]>;
+    createPet(body: NewPet): Promise<Pet>;
+    getPetById(petId: number): Promise<Pet>;
+    updatePet(petId: number, body: NewPet): Promise<Pet>;
+    deletePet(petId: number): Promise<any>;
+}
+
+@ApiTags('pets')
+@Controller('api/pets')
+export class PetsController {
+    constructor(@Inject('IPetsService') private readonly service: IPetsService) {
+    }
+
+    @Get('')
+    @ListPetsEndpoint()
+    async listPets(@Query('limit') limit?: number, @Query('status') status?: string): Promise<Pet[]> {
+        return this.service.listPets(limit, status);
+    }
+
+    @Post('')
+    @CreatePetEndpoint()
+    async createPet(@Body() body: NewPet): Promise<Pet> {
+        return this.service.createPet(body);
+    }
+
+    @Get(':petId')
+    @GetPetByIdEndpoint()
+    async getPetById(@Param('petId') petId: number): Promise<Pet> {
+        return this.service.getPetById(petId);
+    }
+
+    @Put(':petId')
+    @UpdatePetEndpoint()
+    async updatePet(@Param('petId') petId: number, @Body() body: NewPet): Promise<Pet> {
+        return this.service.updatePet(petId, body);
+    }
+
+    @Delete(':petId')
+    @DeletePetEndpoint()
+    async deletePet(@Param('petId') petId: number): Promise<any> {
+        return this.service.deletePet(petId);
+    }
+}"
+`;
+
+exports[`ControllerGenerator Snapshot Tests should match snapshot for simple GET controller 1`] = `
+"import { Controller, Get, Inject, Query } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
+import { ListPetsEndpoint } from "../decorators/pets.decorator";
+import { Pet } from "../dtos/Pet.dto";
+
+export interface IPetsService {
+    listPets(limit?: number): Promise<Pet[]>;
+}
+
+@ApiTags('pets')
+@Controller('api/pets')
+export class PetsController {
+    constructor(@Inject('IPetsService') private readonly service: IPetsService) {
+    }
+
+    @Get('')
+    @ListPetsEndpoint()
+    async listPets(@Query('limit') limit?: number): Promise<Pet[]> {
+        return this.service.listPets(limit);
+    }
+}"
+`;

@@ -1,0 +1,100 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`GraphGenerator Snapshot Tests should generate consistent output for circular graph 1`] = `
+"# Entity Relationship Graph
+
+Generated from: **Circular API**
+ v1.0.0
+
+Generated at: 2026-02-12T12:52:39.198Z
+
+## Mermaid Diagram
+
+\`\`\`mermaid
+graph LR
+
+  User["User"]:::entityStyle
+  Order["Order"]:::entityStyle
+
+  User <-->|mutual| Order
+
+
+  classDef entityStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff,font-weight:bold
+
+  %% Bidirectional edges indicate mutual relationships
+\`\`\`
+
+## Entity Summary
+
+| Entity | Endpoints | Relationships | Bidirectional |
+|--------|-----------|---------------|---------------|
+| Order | 1 | 1 | Yes |
+| User | 1 | 1 | Yes |"
+`;
+
+exports[`GraphGenerator Snapshot Tests should generate consistent output for complex graph 1`] = `
+"# Entity Relationship Graph
+
+Generated from: **Complex API**
+ v2.0.0
+
+Generated at: 2026-02-12T12:52:39.198Z
+
+## Mermaid Diagram
+
+\`\`\`mermaid
+graph LR
+
+  User["User"]:::entityStyle
+  Order["Order"]:::entityStyle
+  Product["Product"]:::entityStyle
+
+  User <-->|mutual| Order
+
+  Order -->|hasMany| Product
+
+  classDef entityStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff,font-weight:bold
+
+  %% Bidirectional edges indicate mutual relationships
+\`\`\`
+
+## Entity Summary
+
+| Entity | Endpoints | Relationships | Bidirectional |
+|--------|-----------|---------------|---------------|
+| Order | 2 | 2 | Yes |
+| Product | 1 | 0 | Yes |
+| User | 2 | 1 | Yes |"
+`;
+
+exports[`GraphGenerator Snapshot Tests should generate consistent output for simple graph 1`] = `
+"# Entity Relationship Graph
+
+Generated from: **Simple API**
+ v1.0.0
+
+Generated at: 2026-02-12T12:52:39.197Z
+
+## Mermaid Diagram
+
+\`\`\`mermaid
+graph LR
+
+  User["User"]:::entityStyle
+  Order["Order"]:::entityStyle
+
+  User <-->|mutual| Order
+
+
+  classDef entityStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:2px,color:#fff,font-weight:bold
+
+  %% Bidirectional edges indicate mutual relationships
+\`\`\`
+
+## Entity Summary
+
+| Entity | Endpoints | Relationships | Bidirectional |
+|--------|-----------|---------------|---------------|
+| Order | 1 | 1 | Yes |
+| User | 2 | 1 | Yes |"
+`;

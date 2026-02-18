@@ -1,0 +1,108 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Real-World Integration Tests File Path Conventions should follow consistent naming conventions across both specs: expanded-file-paths 1`] = `
+[
+  "generated/controllers/pets.controller.ts",
+  "generated/controllers/store.controller.ts",
+  "generated/controllers/user.controller.ts",
+  "generated/decorators/pets.decorator.ts",
+  "generated/decorators/store.decorator.ts",
+  "generated/decorators/user.decorator.ts",
+  "generated/dtos/Address.dto.ts",
+  "generated/dtos/ApiResponse.dto.ts",
+  "generated/dtos/Category.dto.ts",
+  "generated/dtos/Coordinates.dto.ts",
+  "generated/dtos/Error.dto.ts",
+  "generated/dtos/NewPet.dto.ts",
+  "generated/dtos/Order.dto.ts",
+  "generated/dtos/OrderItem.dto.ts",
+  "generated/dtos/Pet.dto.ts",
+  "generated/dtos/PetList.dto.ts",
+  "generated/dtos/Tag.dto.ts",
+  "generated/dtos/User.dto.ts",
+]
+`;
+
+exports[`Real-World Integration Tests File Path Conventions should follow consistent naming conventions across both specs: petstore-file-paths 1`] = `
+[
+  "generated/controllers/pets.controller.ts",
+  "generated/decorators/pets.decorator.ts",
+  "generated/dtos/Category.dto.ts",
+  "generated/dtos/Error.dto.ts",
+  "generated/dtos/NewPet.dto.ts",
+  "generated/dtos/Pet.dto.ts",
+  "generated/dtos/Tag.dto.ts",
+]
+`;
+
+exports[`Real-World Integration Tests Petstore Expanded Integration should generate complete codebase from petstore-expanded.yaml: petstore-expanded-file-structure 1`] = `
+"generated/controllers/pets.controller.ts: [PetsController] (7 imports)
+generated/controllers/store.controller.ts: [StoreController] (4 imports)
+generated/controllers/user.controller.ts: [UserController] (4 imports)
+generated/decorators/pets.decorator.ts: [] (6 imports)
+generated/decorators/store.decorator.ts: [] (3 imports)
+generated/decorators/user.decorator.ts: [] (3 imports)
+generated/dtos/Address.dto.ts: [Address] (4 imports)
+generated/dtos/ApiResponse.dto.ts: [ApiResponse] (2 imports)
+generated/dtos/Category.dto.ts: [Category] (2 imports)
+generated/dtos/Coordinates.dto.ts: [Coordinates] (2 imports)
+generated/dtos/Error.dto.ts: [Error] (2 imports)
+generated/dtos/NewPet.dto.ts: [NewPet] (5 imports)
+generated/dtos/Order.dto.ts: [Order] (5 imports)
+generated/dtos/OrderItem.dto.ts: [OrderItem] (2 imports)
+generated/dtos/Pet.dto.ts: [Pet] (5 imports)
+generated/dtos/PetList.dto.ts: [PetList] (4 imports)
+generated/dtos/Tag.dto.ts: [Tag] (2 imports)
+generated/dtos/User.dto.ts: [User] (4 imports)"
+`;
+
+exports[`Real-World Integration Tests Petstore Expanded Integration should generate controllers for all three resource types: petstore-expanded-controller-methods 1`] = `
+"pets: createPet, deletePet, getPetById, listPets, patchPet, updatePet, uploadPetImage
+store: deleteOrder, getInventory, getOrderById, placeOrder
+user: createUser, deleteUser, getUserByName, loginUser, logoutUser, updateUser"
+`;
+
+exports[`Real-World Integration Tests Petstore Expanded Integration should handle PATCH operation correctly: petstore-expanded-patch-method 1`] = `
+"@Patch(':petId')
+    @PatchPetEndpoint()
+    async patchPet(@Param('petId') petId: number, @Body() body: any): Promise<Pet> {
+        return this.service.patchPet(petId, body);
+    }"
+`;
+
+exports[`Real-World Integration Tests Petstore Expanded Integration should handle nested schemas with proper imports: petstore-expanded-nested-schemas 1`] = `
+"orderItems: items | type: import("/generated/dtos/OrderItem.dto").OrderItem[] | decorators: 5
+orderShippingAddress: shippingAddress | type: import("/generated/dtos/Address.dto").Address | decorators: 4
+addressCoordinates: coordinates | type: import("/generated/dtos/Coordinates.dto").Coordinates | decorators: 4
+userAddresses: addresses | type: import("/generated/dtos/Address.dto").Address[] | decorators: 5"
+`;
+
+exports[`Real-World Integration Tests Petstore Integration should generate all CRUD operations for pets resource: petstore-controller-methods 1`] = `
+[
+  "createPet",
+  "deletePet",
+  "getPetById",
+  "listPets",
+  "updatePet",
+]
+`;
+
+exports[`Real-World Integration Tests Petstore Integration should generate complete codebase from petstore.yaml: petstore-file-structure 1`] = `
+"generated/controllers/pets.controller.ts: [PetsController] (5 imports)
+generated/decorators/pets.decorator.ts: [] (4 imports)
+generated/dtos/Category.dto.ts: [Category] (2 imports)
+generated/dtos/Error.dto.ts: [Error] (2 imports)
+generated/dtos/NewPet.dto.ts: [NewPet] (5 imports)
+generated/dtos/Pet.dto.ts: [Pet] (5 imports)
+generated/dtos/Tag.dto.ts: [Tag] (2 imports)"
+`;
+
+exports[`Real-World Integration Tests Petstore Integration should generate correct imports in controller: petstore-controller-imports 1`] = `
+[
+  "../decorators/pets.decorator: [CreatePetEndpoint, DeletePetEndpoint, GetPetByIdEndpoint, ListPetsEndpoint, UpdatePetEndpoint]",
+  "../dtos/NewPet.dto: [NewPet]",
+  "../dtos/Pet.dto: [Pet]",
+  "@nestjs/common: [Body, Controller, Delete, Get, Inject, Param, Post, Put, Query]",
+  "@nestjs/swagger: [ApiTags]",
+]
+`;
