@@ -170,7 +170,7 @@ opennest ./api.yaml --structure domain-based
 - **NestJS:** 10.x (tested)
 - **TypeScript:** >=4.8
 
-(OpenAPI 2.0 / Swagger and 3.1.x coming in future releases)
+(3.1.x coming in future updates)
 
 ## Known Limitations
 
@@ -185,13 +185,7 @@ opennest ./api.yaml --structure domain-based
 
 ## Roadmap
 
-- [ ] OpenAPI 2.0 (Swagger) support
-- [ ] Service layer generation with dependency injection
-- [ ] Database schema generation (TypeORM, Prisma)
-- [ ] Portal UI for visual API definition
-- [ ] Configuration file support (opennest.config.json)
-- [ ] Plugin system for custom generators
-- [ ] Watch mode for spec file changes
+- [ ] OpenAPI 3.1.x (Swagger) support
 
 ## Contributing
 
