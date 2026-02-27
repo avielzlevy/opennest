@@ -3,7 +3,7 @@
  * Orchestrates the main application flow: loading specs, checking conflicts, prompting users, and generating code
  */
 
-import { confirm } from "@inquirer/prompts";
+import { confirm, isCancel } from "@clack/prompts";
 import { Project } from "ts-morph";
 import { OpenAPIV3 } from "openapi-types";
 import { loadSpec } from "./spec-loader";
@@ -177,10 +177,10 @@ export class CliApplication {
 
     const shouldContinue = await confirm({
       message: "Do you want to continue?",
-      default: false,
+      initialValue: false,
     });
 
-    if (!shouldContinue) {
+    if (isCancel(shouldContinue) || !shouldContinue) {
       throw new Error("Generation cancelled by user");
     }
 

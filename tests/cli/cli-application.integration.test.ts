@@ -13,12 +13,13 @@ import {
 } from '../../src/cli/file-conflict-handler';
 import { loadSpec } from '../../src/cli/spec-loader';
 
-// Mock @inquirer/prompts at module level
-jest.mock('@inquirer/prompts', () => ({
+// Mock @clack/prompts at module level
+jest.mock('@clack/prompts', () => ({
   confirm: jest.fn(),
+  isCancel: jest.fn((val) => typeof val === 'symbol'),
 }));
 
-import { confirm } from '@inquirer/prompts';
+import { confirm } from '@clack/prompts';
 
 describe('CLI Application Integration - Conflict & Prompt Flow', () => {
   let tempDir: string;
@@ -199,7 +200,7 @@ describe('CLI Application Integration - Conflict & Prompt Flow', () => {
 
       const userChoice = await confirmMock({
         message: 'Do you want to continue?',
-        default: false,
+        initialValue: false,
       });
 
       expect(userChoice).toBe(true);
@@ -211,7 +212,7 @@ describe('CLI Application Integration - Conflict & Prompt Flow', () => {
 
       const userChoice = await confirmMock({
         message: 'Do you want to continue?',
-        default: false,
+        initialValue: false,
       });
 
       expect(userChoice).toBe(false);
@@ -251,7 +252,7 @@ describe('CLI Application Integration - Conflict & Prompt Flow', () => {
       confirmMock.mockResolvedValue(true);
       const shouldProceed = await confirmMock({
         message: 'Continue?',
-        default: false,
+        initialValue: false,
       });
 
       expect(shouldProceed).toBe(true);
@@ -273,7 +274,7 @@ describe('CLI Application Integration - Conflict & Prompt Flow', () => {
       confirmMock.mockResolvedValue(false);
       const shouldProceed = await confirmMock({
         message: 'Continue?',
-        default: false,
+        initialValue: false,
       });
 
       expect(shouldProceed).toBe(false);
