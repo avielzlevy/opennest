@@ -7,48 +7,14 @@ import {
   formatHeading,
   formatCodeBlock,
   formatTable,
-  formatLink,
   formatEntityReference,
   formatSummaryContextTemplate,
   formatControllerContextTemplate,
-  type SummaryContextTemplate,
-  type ControllerContextTemplate,
-  type SpecInfoSection,
-  type MermaidGraphSection,
-  type EntitySummarySection,
-  type RelationshipSummarySection,
-  type CrossEntityPatternsSection,
-  type JsDocSnippetsSection,
-  type EntityOverviewSection,
-  type DetailedRelationshipSection,
-  type EndpointDetailSection,
-  type UsageExampleSection,
-  type RelatedEntitySection,
 } from "../../src/generators/context-templates";
 
 describe("Context Templates Foundation", () => {
   describe("Formatting Functions", () => {
-    describe("formatHeading", () => {
-      it("should format H1 heading", () => {
-        const result = formatHeading("Main Title", 1);
-        expect(result).toBe("# Main Title");
-      });
-
-      it("should format H2 heading by default", () => {
-        const result = formatHeading("Subheading");
-        expect(result).toBe("## Subheading");
-      });
-
-      it("should format H3 heading", () => {
-        const result = formatHeading("Sub-subheading", 3);
-        expect(result).toBe("### Sub-subheading");
-      });
-
-      it("should handle headings with special characters", () => {
-        const result = formatHeading("Title: Context & Relationships", 2);
-        expect(result).toBe("## Title: Context & Relationships");
-      });
-    });
+    // formatHeading tests removed — trivial string concatenation ('# ' + text)
 
     describe("formatCodeBlock", () => {
       it("should format code block with language", () => {
@@ -118,7 +84,10 @@ describe("Context Templates Foundation", () => {
 
       it("should handle special characters in cells", () => {
         const headers = ["Type", "Cardinality"];
-        const rows = [["hasMany", "1:N"], ["belongsTo", "N:1"]];
+        const rows = [
+          ["hasMany", "1:N"],
+          ["belongsTo", "N:1"],
+        ];
         const result = formatTable(headers, rows);
 
         expect(result).toContain("| hasMany | 1:N |");
@@ -126,225 +95,12 @@ describe("Context Templates Foundation", () => {
       });
     });
 
-    describe("formatLink", () => {
-      it("should format markdown link", () => {
-        const result = formatLink("GRAPH.md", "GRAPH.md");
-        expect(result).toBe("[GRAPH.md](GRAPH.md)");
-      });
-
-      it("should handle relative paths", () => {
-        const result = formatLink("User Context", "../user/CONTEXT.md");
-        expect(result).toBe("[User Context](../user/CONTEXT.md)");
-      });
-
-      it("should handle URLs", () => {
-        const result = formatLink("OpenAPI Spec", "https://example.com/api");
-        expect(result).toBe("[OpenAPI Spec](https://example.com/api)");
-      });
-    });
-
-    describe("formatEntityReference", () => {
-      it("should format entity name in bold", () => {
-        const result = formatEntityReference("User");
-        expect(result).toBe("**User**");
-      });
-
-      it("should handle multi-word entity names", () => {
-        const result = formatEntityReference("OrderItem");
-        expect(result).toBe("**OrderItem**");
-      });
-    });
+    // formatLink + formatEntityReference tests removed — trivial string wrapping
   });
 
-  describe("Template Interface Validation", () => {
-    describe("SummaryContextTemplate", () => {
-      it("should construct valid summary template", () => {
-        const template: SummaryContextTemplate = {
-          title: "API Context Overview",
-          specInfo: {
-            title: "Petstore API",
-            version: "1.0.0",
-            generatedAt: new Date().toISOString(),
-            totalEntities: 3,
-            totalRelationships: 2,
-            totalEndpoints: 10,
-          } as SpecInfoSection,
-          graph: {
-            title: "Entity Relationship Graph",
-            code: "graph LR\n  A[User] --> B[Order]",
-            description: "Full system relationships",
-          } as MermaidGraphSection,
-          entitySummary: {
-            table: "| Entity | Endpoints |",
-            description: "Overview of all entities",
-          } as EntitySummarySection,
-          relationshipSummary: {
-            relationships: ["User hasMany Order"],
-            narrative: "Key relationships in system",
-          } as RelationshipSummarySection,
-          crossEntityPatterns: {
-            patterns: [{ title: "Pattern1", description: "Description" }],
-            analysis: "Analysis text",
-          } as CrossEntityPatternsSection,
-          jsDocSnippets: {
-            examples: [{ label: "Example1", code: "code" }],
-            guidance: "Guidance text",
-          } as JsDocSnippetsSection,
-        };
-
-        expect(template).toBeDefined();
-        expect(template.title).toBe("API Context Overview");
-        expect(template.specInfo.totalEntities).toBe(3);
-        expect(template.graph.code).toContain("User");
-      });
-    });
-
-    describe("ControllerContextTemplate", () => {
-      it("should construct valid controller template", () => {
-        const template: ControllerContextTemplate = {
-          entityName: "User",
-          entityOverview: {
-            description: "Represents a user account",
-            role: "primary",
-            businessContext: "Core entity for authentication",
-          } as EntityOverviewSection,
-          subgraph: {
-            title: "User Relationships",
-            code: "graph LR\n  User --> Order",
-            description: "Direct relationships",
-          } as MermaidGraphSection,
-          relationships: [
-            {
-              type: "hasMany",
-              targetEntity: "Order",
-              foreignKey: "user_id",
-              accessPath: "GET /users/{id}/orders",
-              cardinality: "1:N",
-              description: "User has many orders",
-              bidirectional: false,
-            } as DetailedRelationshipSection,
-          ],
-          endpoints: [
-            {
-              method: "GET",
-              path: "/users",
-              operationId: "listUsers",
-              description: "List all users",
-              jsDoc: "/** List all users */",
-            } as EndpointDetailSection,
-          ],
-          jsDocAnnotations: "/** User entity */",
-          usageExamples: [
-            {
-              title: "Get User",
-              description: "Fetch a user by ID",
-              code: "const user = await api.users.get(1);",
-            } as UsageExampleSection,
-          ],
-          relatedEntities: [
-            {
-              entityName: "Order",
-              relationshipType: "hasMany",
-              description: "User has many orders",
-            } as RelatedEntitySection,
-          ],
-        };
-
-        expect(template).toBeDefined();
-        expect(template.entityName).toBe("User");
-        expect(template.relationships).toHaveLength(1);
-        expect(template.endpoints).toHaveLength(1);
-      });
-    });
-
-    describe("Section Interfaces", () => {
-      it("should create valid SpecInfoSection", () => {
-        const spec: SpecInfoSection = {
-          title: "Test API",
-          version: "2.0.0",
-          generatedAt: "2025-02-03T12:00:00Z",
-          totalEntities: 5,
-          totalRelationships: 8,
-          totalEndpoints: 20,
-        };
-
-        expect(spec.title).toBe("Test API");
-        expect(spec.totalEntities).toBe(5);
-      });
-
-      it("should create valid MermaidGraphSection", () => {
-        const graph: MermaidGraphSection = {
-          title: "System Graph",
-          code: "graph LR\n  A[A] --> B[B]",
-          description: "Complete system relationships",
-        };
-
-        expect(graph.title).toBe("System Graph");
-        expect(graph.code).toContain("graph LR");
-      });
-
-      it("should create valid EntitySummarySection", () => {
-        const summary: EntitySummarySection = {
-          table: "| Entity | Count |\n| --- | --- |\n| User | 5 |",
-          description: "Entity overview",
-        };
-
-        expect(summary.table).toContain("Entity");
-        expect(summary.description).toBe("Entity overview");
-      });
-
-      it("should create valid DetailedRelationshipSection", () => {
-        const rel: DetailedRelationshipSection = {
-          type: "hasMany",
-          targetEntity: "Order",
-          foreignKey: "user_id",
-          accessPath: "GET /users/{id}/orders",
-          cardinality: "1:N",
-          description: "User owns multiple orders",
-          bidirectional: false,
-        };
-
-        expect(rel.type).toBe("hasMany");
-        expect(rel.cardinality).toBe("1:N");
-        expect(rel.bidirectional).toBe(false);
-      });
-
-      it("should create valid EndpointDetailSection", () => {
-        const endpoint: EndpointDetailSection = {
-          method: "POST",
-          path: "/users",
-          operationId: "createUser",
-          description: "Create new user",
-          jsDoc: "/** Create user */",
-        };
-
-        expect(endpoint.method).toBe("POST");
-        expect(endpoint.operationId).toBe("createUser");
-      });
-
-      it("should create valid UsageExampleSection", () => {
-        const example: UsageExampleSection = {
-          title: "Create Order",
-          description: "Create a new order for user",
-          code: "const order = await api.orders.create({ userId: 1 });",
-        };
-
-        expect(example.title).toBe("Create Order");
-        expect(example.code).toContain("orders.create");
-      });
-
-      it("should create valid RelatedEntitySection", () => {
-        const related: RelatedEntitySection = {
-          entityName: "Product",
-          relationshipType: "hasMany",
-          description: "Order contains products",
-        };
-
-        expect(related.entityName).toBe("Product");
-        expect(related.relationshipType).toBe("hasMany");
-      });
-    });
-  });
+  // Template Interface Validation block removed — these tests just construct
+  // typed objects and assert toBeDefined(). TypeScript compilation already
+  // validates interface conformance; runtime assertions add zero value.
 
   describe("Template Formatting Functions", () => {
     describe("formatSummaryContextTemplate", () => {
@@ -549,7 +305,9 @@ describe("Context Templates Foundation", () => {
           ],
         ];
         const result = formatTable(headers, rows);
-        expect(result).toContain("GET /users/{id}/orders/{orderId}/items/{itemId}");
+        expect(result).toContain(
+          "GET /users/{id}/orders/{orderId}/items/{itemId}",
+        );
         expect(result).toContain("Retrieve a specific item");
       });
     });
@@ -574,56 +332,11 @@ describe("Context Templates Foundation", () => {
       });
     });
 
-    describe("Content generation rules export", () => {
-      it("should define rules for entity overview", () => {
-        const { CONTENT_GENERATION_RULES } = require("../../src/generators/context-templates");
-        expect(CONTENT_GENERATION_RULES.entityOverview).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.entityOverview.description).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.entityOverview.role).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.entityOverview.businessContext).toBeDefined();
-      });
-
-      it("should define rules for relationship summary", () => {
-        const { CONTENT_GENERATION_RULES } = require("../../src/generators/context-templates");
-        expect(CONTENT_GENERATION_RULES.relationshipSummary).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.relationshipSummary.format).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.relationshipSummary.includes).toBeDefined();
-      });
-
-      it("should define rules for cross-entity patterns", () => {
-        const { CONTENT_GENERATION_RULES } = require("../../src/generators/context-templates");
-        expect(CONTENT_GENERATION_RULES.crossEntityPatterns).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.crossEntityPatterns.examples).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.crossEntityPatterns.extraction).toBeDefined();
-      });
-
-      it("should define rules for usage examples", () => {
-        const { CONTENT_GENERATION_RULES } = require("../../src/generators/context-templates");
-        expect(CONTENT_GENERATION_RULES.usageExamples).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.usageExamples.includeCreation).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.usageExamples.codeLanguage).toBeDefined();
-      });
-
-      it("should define rules for JSDoc snippets", () => {
-        const { CONTENT_GENERATION_RULES } = require("../../src/generators/context-templates");
-        expect(CONTENT_GENERATION_RULES.jsDocSnippets).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.jsDocSnippets.count).toBeDefined();
-        expect(CONTENT_GENERATION_RULES.jsDocSnippets.includes).toBeDefined();
-      });
-    });
+    // Content generation rules export tests removed — just checking
+    // that exported constants are toBeDefined(), no logic validated.
   });
 
-  describe("Markdown Format Constants", () => {
-    it("should export MARKDOWN_FORMAT constants", () => {
-      const { MARKDOWN_FORMAT } = require("../../src/generators/context-templates");
-      expect(MARKDOWN_FORMAT).toBeDefined();
-      expect(MARKDOWN_FORMAT.H1).toBe("# ");
-      expect(MARKDOWN_FORMAT.H2).toBe("## ");
-      expect(MARKDOWN_FORMAT.H3).toBe("### ");
-      expect(MARKDOWN_FORMAT.MERMAID_FENCE).toBe("```mermaid");
-      expect(MARKDOWN_FORMAT.TYPESCRIPT_FENCE).toBe("```typescript");
-    });
-  });
+  // Markdown Format Constants tests removed — testing constant values.
 
   describe("Integration: Template building with realistic data", () => {
     it("should build summary template with petstore-like metadata", () => {
@@ -672,9 +385,7 @@ describe("Context Templates Foundation", () => {
 
 import * as fs from "fs";
 import * as path from "path";
-import {
-  ContextFileGenerator,
-} from "../../src/generators/context-file-generator";
+import { ContextFileGenerator } from "../../src/generators/context-file-generator";
 import {
   RelationshipType,
   DetectionSource,
@@ -857,8 +568,18 @@ describe("ContextFileGenerator", () => {
       expect(fs.existsSync(summaryPath)).toBe(true);
 
       // Check per-entity files exist
-      const userContextPath = path.join(tempDir, "controllers", "user", "CONTEXT.md");
-      const orderContextPath = path.join(tempDir, "controllers", "order", "CONTEXT.md");
+      const userContextPath = path.join(
+        tempDir,
+        "controllers",
+        "user",
+        "CONTEXT.md",
+      );
+      const orderContextPath = path.join(
+        tempDir,
+        "controllers",
+        "order",
+        "CONTEXT.md",
+      );
 
       expect(fs.existsSync(userContextPath)).toBe(true);
       expect(fs.existsSync(orderContextPath)).toBe(true);
@@ -955,7 +676,12 @@ describe("ContextFileGenerator", () => {
       generator.generateControllerContexts(tempDir);
 
       const userPath = path.join(tempDir, "controllers", "user", "CONTEXT.md");
-      const orderPath = path.join(tempDir, "controllers", "order", "CONTEXT.md");
+      const orderPath = path.join(
+        tempDir,
+        "controllers",
+        "order",
+        "CONTEXT.md",
+      );
 
       expect(fs.existsSync(userPath)).toBe(true);
       expect(fs.existsSync(orderPath)).toBe(true);
