@@ -3,7 +3,7 @@ import { Project, SourceFile } from "ts-morph";
 import { IGenerator } from "../interfaces/core";
 
 // Helper imports
-import { groupOperationsByTag, HTTP_METHODS, buildResourceName } from "../utils/operation-helpers";
+import { groupOperationsByTag, HTTP_METHODS, buildResourceName, getOperationName } from "../utils/operation-helpers";
 import {
   extractBodyDtoName,
   extractResponseDtoName,
@@ -77,12 +77,8 @@ export class DecoratorGenerator implements IGenerator {
       for (const op of operations) {
         const { operation } = op;
 
-        // Name: "PreviewCouponEndpoint"
-        let baseName = operation.operationId || `${op.method}${resourceName}`;
-        if (baseName.includes("_")) {
-          const parts = baseName.split("_");
-          baseName = parts[parts.length - 1] || baseName;
-        }
+        // Name: use the same camelCase normalization as the controller so names always match
+        const baseName = getOperationName(operation, resourceName, op.method);
         const functionName = `${capitalize(baseName)}Endpoint`;
 
         // -- Build the applyDecorators arguments --
