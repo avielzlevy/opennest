@@ -96,7 +96,7 @@ export function buildControllerBasePath(tag: string): string {
     throw new Error(`buildControllerBasePath() requires a string, received: ${typeof tag}`);
   }
 
-  return `api/${tag.toLowerCase()}`;
+  return `api/${tag.toLowerCase().replace(/\s+/g, '')}`;
 }
 
 /**
